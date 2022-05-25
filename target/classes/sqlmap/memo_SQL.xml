@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.workTogether.memo.mapper.MemoMapper">
+
+	<!-- 메모 작성하기 -->
+	<insert id="writeMemo" parameterType="memoVO">
+		INSERT INTO MEMO
+					(MEMO_ID
+		            ,MEMO_WRTR
+		            ,MEMO_CNTNT
+		            ,MEMO_WRT_DT
+		            ,MEMO_MDFY_DT)
+		VALUES((SELECT 'MEMO' || LPAD(NVL(MAX(SUBSTR(MEMO_ID,5,5)),0)+1,5,'0') FROM MEMO)
+		       ,#{memoWrtr}
+		       ,#{memoCntnt}
+		       ,SYSDATE,SYSDATE)
+	</insert>
+	
+	<!-- 메모 조회하기  -->
+	<select id="selectMemo" resultType="memoVO" parameterType="hashMap">
+		SELECT MEMO_CNTNT,MEMO_WRT_DT,MEMO_ID
+		  FROM MEMO
+		 WHERE MEMO_WRTR=#{memoWrtr}
+	    ORDER BY MEMO_ID	 
+	</select>
+	
+	<!-- 메모 수정하기  -->
+	<update id="updateMemo" parameterType="hashMap" >
+		UPDATE MEMO
+		   SET MEMO_CNTNT=#{memoCntnt},
+		   	   MEMO_WRT_DT=SYSDATE
+		 WHERE MEMO_WRTR=#{memoWrtr}
+		   AND MEMO_ID=#{memoId}
+	</update>
+	
+	<!-- 메모 삭제하기 -->   
+	<delete id="deleteMemo" parameterType="hashMap">
+		DELETE MEMO
+		  WHERE MEMO_WRTR=#{memoWrtr}
+		   AND MEMO_ID=#{memoId}
+	</delete>
+	
+</mapper>

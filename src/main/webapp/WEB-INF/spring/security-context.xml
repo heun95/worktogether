@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:security="http://www.springframework.org/schema/security"
+	xsi:schemaLocation="http://www.springframework.org/schema/security http://www.springframework.org/schema/security/spring-security.xsd
+		http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+	
+	<!-- 로그인 실패! -->
+	<bean id="customAccessDenied" class="kr.or.workTogether.security.CustomAccessDeniedHandler"></bean>
+	
+	<!-- 로그인 성공! -->
+	<bean id="customLoginSuccess" class="kr.or.workTogether.security.CustomLoginSuccessHandler"></bean>
+	
+	<!-- 사용자가 정의한 비밀번호 암호화 처리기 -->
+	<bean id="customPasswordEncoder" class="kr.or.workTogether.security.CustomNoOpPasswordEncoder"></bean>
+	
+	<!-- 사용자의 상세 정보 얻기 -->
+	<bean id="customUserDetailService" class="kr.or.workTogether.security.CustomUserDetailService"></bean>
+	
+	<!-- 비밀번호를 암호화 해줌 -->
+	<!-- <bean id="bcryptPasswordEncoder" class="org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder" /> -->
+	<security:http pattern="/**/*.js" security="none"/>
+	<security:http pattern="/**/*.css" security="none"/>
+	<security:http pattern="/images/**" security="none"/>
+	<security:http pattern="/*.ico" security="none"/>
+	<security:http pattern="/resources/**" security="none"/>
+	<security:http pattern="/**/*">
+			
+		<security:intercept-url pattern="/session/login" access="permitAll" />
+<!-- 		<security:intercept-url pattern="/session/logout" access="permitAll" /> -->
+		<security:intercept-url pattern="/**" access="hasRole('ROLE_MEMBER')" />
+<!-- 		<security:intercept-url pattern="/" access="hasRole('ROLE_MEMBER')" /> -->
+	
+		<!-- 접근 제한에 걸리면 로그인 페이지로 이동함 -->
+		<security:form-login login-page="/session/login" authentication-success-handler-ref="customLoginSuccess"  />
+		 
+		<security:access-denied-handler ref="customAccessDenied"  />
+		<!-- 
+			root-context.xml에 있음 
+			데이터소스를 지정하고 테이블(persistent_logins)을 이용해서 기존 로그인 정보를 기록
+			쿠키의 유효시간을 지정(604800 : 7일)
+		-->
+		<security:remember-me data-source-ref="dataSource" token-validity-seconds="604800" />
+		
+		<!-- 로그아웃. 세션을 무효화 함 -->
+		<security:logout logout-url="/session/logout" logout-success-url="/session/login" invalidate-session="true" delete-cookies="JSESSIONID" />
+		
+	</security:http>
+	
+	<security:authentication-manager>
+		<!-- 
+			지정된 아이디와 패스워드로 로그인이 가능하도록 설정함 
+			authorities : ROLE_MEMBER, ROLE_ADMIN
+			member 사용자 : /board/list, /board/register, /notice/list
+			admin 사용자   : /board/list, /board/register, /notice/list, /notice/register
+			스프링 시큐리티 5버전부터는 패스워드 암호화 처리기를 반드시 이용하도록 변경이 되었음
+			암호화 처리기를 사용하지 않도록 "{noop}" 문자열을 비밀번호 앞에 사용.
+		-->
+		<!-- <security:authentication-provider> -->
+		<!-- 	<security:user-service> -->
+		<!-- 		<security:user name="member" password="{noop}1234" authorities="ROLE_MEMBER"/> -->
+		<!-- 		<security:user name="admin" password="{noop}abcd" authorities="ROLE_MEMBER,ROLE_ADMIN"/> -->
+		<!-- 	</security:user-service> -->
+		<!-- </security:authentication-provider> -->
+		<!-- 인증 매니저에 인증 제공자를 등록 -->
+		<!-- 
+			CustomUserDetailService 빈을 인증 제공자에 지정함 
+			스프링 시큐리티의 UserDetailService를 구현해서 사용자의 상세 정보를 얻어오기 위함
+		-->
+		<security:authentication-provider user-service-ref="customUserDetailService">
+			<!-- 데이터 소스 지정 -->
+			<!-- <security:jdbc-user-service data-source-ref="dataSource" /> -->
+			<!-- <security:jdbc-user-service data-source-ref="dataSource" -->
+			<!--  users-by-username-query="SELECT MEMBERID, PASSWORD, ENABLED FROM MEMBER WHERE MEMBERID=?" -->
+			<!--  authorities-by-username-query="SELECT B.MEMBERID, A.AUTH FROM MEMBER_AUTH A, MEMBER B WHERE A.MEMBERID = B.MEMBERID AND B.MEMBERID=?"/> -->
+			
+			<!-- 사용자가 정의한 비밀번호 암호화 처리기 지정 -->
+			<security:password-encoder ref="customPasswordEncoder" />
+			
+			<!-- BCryptPasswordEncoder 비밀번호 암호화 처리기 지정 -->
+			<!-- <security:password-encoder ref="bcryptPasswordEncoder" /> -->
+		</security:authentication-provider>
+	</security:authentication-manager>
+</beans>
+
+
+
+
+
+
+
+
+

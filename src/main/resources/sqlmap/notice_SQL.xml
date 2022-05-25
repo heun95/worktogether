@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.workTogether.notice.mapper.NoticeMapper">
+
+	<!-- 공지사항 목록 -->
+	<!-- 공지사항 페이징 처리 -->
+	<!-- 공지사항 검색 -->
+	<select id="list" resultType="boardVO" parameterType="map">
+		SELECT * FROM (
+		SELECT
+		ROWNUM KNUM
+		, T.RNUM
+		, T.BRD_ID
+		, T.BRD_TITLE
+		, T.BRD_WRTR
+		, T.BRD_WRT_DT
+		,
+		T.BRD_MDFY_DT
+		, T.BRD_HIT
+		FROM
+		(
+		SELECT
+		ROW_NUMBER() OVER(ORDER BY BRD_ID)
+		RNUM
+		, BRD_ID
+		, BRD_TITLE
+		, (SELECT EMP_NAME FROM EMPLOYEE WHERE EMP_ID = BRD_WRTR) BRD_WRTR
+		,
+		BRD_WRT_DT
+		, BRD_MDFY_DT
+		, BRD_HIT
+		FROM BOARD
+		WHERE BRD_TYPE_ID = 'G101'
+		AND BRD_DEL_DT IS NULL
+		AND 1 = 1
+		<if test="keyWord!=null and keyWord!=''">
+			AND ( BRD_TITLE LIKE '%'||#{keyWord}||'%'
+			OR BRD_WRTR LIKE
+			'%'||#{keyWord}||'%')
+		</if>
+		ORDER BY BRD_ID DESC
+		) T
+		) K
+		WHERE K.KNUM BETWEEN #{start} AND #{end}
+
+	</select>
+
+	<!-- 공지사항 전체 게시글 수 -->
+	<select id="listCount" parameterType="hashMap" resultType="int">
+		SELECT COUNT(*)
+		FROM BOARD
+		WHERE BRD_TYPE_ID = 'G101'
+		AND BRD_DEL_DT IS NULL
+		AND 1 = 1
+		<if test="keyWord!=null and keyWord!=''">
+			AND ( BRD_TITLE LIKE '%'||#{keyWord}||'%'
+			OR BRD_WRTR LIKE
+			'%'||#{keyWord}||'%')
+		</if>
+	</select>
+
+	<!-- 공지사항 상세내용 -->
+	<select id="detail" resultType="boardVO" parameterType="String">
+		SELECT
+		BRD_ID, BRD_TITLE, BRD_CNTNT, BRD_HIT
+		,(SELECT EMP_NAME FROM EMPLOYEE WHERE EMP_ID = BRD_WRTR ) BRD_WRTR, BRD_WRT_DT,
+		BRD_MDFY_DT
+		FROM BOARD
+		WHERE BRD_TYPE_ID= 'G101'
+		AND BRD_ID = #{brdId}
+	</select>
+
+	<!-- 공지사항 입력하기 -->
+	<insert id="insert" parameterType="boardVO">
+		<selectKey keyProperty="brdId" resultType="String"
+			order="BEFORE">
+			SELECT 'BORD'|| LPAD(
+			TO_NUMBER(NVL(MAX(SUBSTR(BRD_ID,5)),0))+1,5,'0') FROM BOARD
+		</selectKey>
+		INSERT INTO BOARD(
+		BRD_ID,
+		BRD_TITLE,
+		BRD_CNTNT,
+		BRD_HIT,
+		BRD_WRTR,
+		BRD_WRT_DT,
+		BRD_TYPE_ID)
+
+		VALUES(
+		#{brdId},
+		#{brdTitle},
+		#{brdCntnt},
+		0,
+		#{brdWrtr},
+		SYSDATE,
+		'G101')
+	</insert>
+
+	<!-- 공지사항 수정하기 -->
+	<update id="update" parameterType="boardVO">
+		UPDATE BOARD
+		SET BRD_TITLE =
+		#{brdTitle},
+		BRD_CNTNT = #{brdCntnt},
+		BRD_MDFY_DT = SYSDATE
+		WHERE
+		BRD_TYPE_ID= 'G101'
+		AND BRD_DEL_DT IS NULL
+		AND BRD_ID = #{brdId}
+	</update>
+
+	<!-- 조회수 증가 -->
+	<update id="updateViewCnt" parameterType="String">
+		UPDATE BOARD
+		SET
+		BRD_HIT
+		= BRD_HIT+1
+		WHERE BRD_ID = #{brdId}
+	</update>
+
+	<!-- 공지사항 삭제하기 -->
+	<delete id="delete" parameterType="String">
+		UPDATE BOARD
+		SET BRD_DEL_DT =
+		SYSDATE
+		WHERE BRD_ID = #{brdId}
+	</delete>
+
+</mapper>
+

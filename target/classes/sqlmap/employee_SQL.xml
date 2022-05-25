@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.workTogether.employee.mapper.EmployeeMapper">
+	
+	<!-- 직원 목록 -->
+	<select id="list" resultType="employeeVO">
+		SELECT * FROM EMPLOYEE
+	</select>
+	
+	<!-- 스프링 시큐리티 로그인을 위한 ResultMap 시작 -->
+	<resultMap type="employeeVO" id="userAuthMap">
+		<id     property="username" column="USERNAME" />
+		<result property="password" column="PASSWORD" />
+		<result property="empName" column="EMP_NAME" />
+		<result property="empPosition" column="EMP_POSITION" />
+		<result property="deptId" column="DEPT_ID" />
+		<result property="empPhoto" column="EMP_PHOTO" />
+		<result property="empBirth" column="EMP_BIRTH" />
+		<result property="empReg" column="EMP_REG" />
+		<result property="empEmail" column="EMP_EMAIL" />
+		<result property="empResume" column="EMP_RESUME" />
+		<result property="empEcnyYmd" column="EMP_ECNY_YMD" />
+		<result property="empRetireYmd" column="EMP_RETIRE_YMD" />
+		<result property="empState" column="EMP_STATE" />
+		<result property="empQrcode" column="EMP_QRCODE" />
+		<result property="empSign" column="EMP_SIGN" />
+		<result property="enabled" column="ENABLED" />
+		<result property="empTel" column="EMP_TEL" />
+		<result property="empPostno" column="EMP_POSTNO" />
+		<result property="empAddr1" column="EMP_ADDR1" />
+		<result property="empAddr2" column="EMP_ADDR2" />
+		<result property="deptName" column="DEPT_NAME" />
+		<result property="atchId" column="ATCH_ID" />
+		<result property="atchPath" column="ATCH_PATH" />
+		<result property="atchName" column="ATCH_NAME" />
+		<result property="atchOldName" column="ATCH_OLDNAME" />
+		<result property="atchExtns" column="ATCH_EXTNS" />
+		
+		<collection property="employeeAuthList" resultMap="authMap"></collection>
+	</resultMap>
+	
+	<resultMap type="employeeAuthVO" id="authMap">
+		<result property="username" column="USERNAME" />
+		<result property="auth" column="AUTH" />
+	</resultMap>
+	<!-- 스프링 시큐리티 로그인을 위한 Map 시작 -->
+	
+	<!-- 스프링 시큐리티 로그인(SELECT) -->
+	<select id="read" parameterType="String" resultMap="userAuthMap">
+		SELECT VU.USERNAME, VU.PASSWORD, VU.EMP_NAME, VU.EMP_POSITION, VU.DEPT_ID, 
+			   VU.EMP_PHOTO, VU.EMP_BIRTH, VU.EMP_REG, VU.EMP_EMAIL, VU.EMP_RESUME, 
+			   VU.EMP_ECNY_YMD, VU.EMP_RETIRE_YMD, VU.EMP_STATE, VU.EMP_QRCODE, VU.EMP_SIGN, 
+			   VU.ENABLED, VU.EMP_TEL, VU.EMP_POSTNO, VU.EMP_ADDR1, VU.EMP_ADDR2,
+		       VU.DEPT_NAME, VU.ATCH_ID, VU.ATCH_PATH, VU.ATCH_NAME, VU.ATCH_OLDNAME, 
+		       VU.ATCH_EXTNS,
+		       VUA.AUTH
+		  FROM VW_USER VU LEFT OUTER JOIN VW_USER_AUTH VUA
+		    ON(VU.USERNAME = VUA.USERNAME)
+		 WHERE VU.USERNAME = #{userName}
+	</select>	
+	
+	<!-- 스프링 시큐리티  USER 뷰 생성 및 재정의 -->
+	<update id="replaceUserView">
+		CREATE OR REPLACE VIEW VW_USER AS
+			SELECT E.EMP_ID AS USERNAME, EMP_PASSWORD AS PASSWORD, EMP_NAME, EMP_POSITION, D.DEPT_ID, 
+			       EMP_PHOTO, EMP_BIRTH, EMP_REG, EMP_EMAIL, 
+			       EMP_RESUME, EMP_ECNY_YMD, EMP_RETIRE_YMD, EMP_STATE, 
+			       EMP_QRCODE, EMP_SIGN, ENABLED, EMP_TEL, EMP_POSTNO, EMP_ADDR1, EMP_ADDR2,
+			       D.DEPT_NAME,
+			       A.ATCH_ID, A.ATCH_PATH, A.ATCH_NAME, A.ATCH_OLDNAME, A.ATCH_EXTNS
+			  FROM EMPLOYEE E 
+			  LEFT OUTER JOIN DEPARTMENT D ON(E.DEPT_ID = D.DEPT_ID)
+			  LEFT OUTER JOIN ATTACH A ON(A.ATCH_REL_ID = E.EMP_ID)
+			  ORDER BY 1
+	</update>
+	
+	<!-- 스프링 시큐리티 USER_AUTH 뷰 생성 및 재정의 -->
+	<update id="replaceUserAuthView">
+		CREATE OR REPLACE VIEW VW_USER_AUTH AS
+		SELECT EMP_ID AS USERNAME, AUTH
+		  FROM EMPLOYEE_AUTH
+	</update>
+</mapper>
+
+
+
+
+
+
+
+
+
+
+
+

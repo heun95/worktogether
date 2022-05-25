@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.workTogether.meeting.mapper.MeetingMapper">
+	
+	<!-- 회의일정(진행중,예정,종료) 조회 : SELECT - LIST -->
+	<select id="getConferenceList" resultType="meetingVO">
+	SELECT CASE WHEN TO_CHAR(A.MTNG_STRT_DT)||' '||TO_CHAR(A.MTNG_STRT_TIME) > TO_CHAR(SYSDATE,'YY/MM/DD HH24') THEN '예정'
+	            WHEN TO_CHAR(A.MTNG_STRT_DT)||' '||TO_CHAR(A.MTNG_END_TIME) > TO_CHAR(SYSDATE,'YY/MM/DD HH24') THEN '진행중'
+	            ELSE '종료' END AS MTNG_STATE,
+	       A.MTNG_ID, A.MTNG_TITLE, A.MTNG_CNTNT, A.MTNG_RSRVT_ID, A.MTNG_STRT_DT, 
+	       A.MTNG_WRT_DT, A.MTNG_MDFY_DT, A.MTNG_DEL_DT, A.MTNG_TYPE_ID, A.MTNG_STRT_TIME, 
+	       A.MTNG_END_TIME,
+	       B.MTNG_RSRVT_EMP_ID, B.MTNG_RSRVT_STATE, B.MTNG_ROOM_TYPE_ID,
+	       C.CMMN_GROUP_NAME AS ROOM_NAME,
+	       D.EMP_NAME,
+	       E.CMMN_GROUP_NAME AS MTNG_TYPE_NAME,
+	      (SELECT COUNT(*) FROM MTNG_MEM X WHERE X.MTNG_ID=A.MTNG_ID) AS MTNG_ATTEND_CNT
+	  FROM MTNG A, MTNG_RSRVT B, COMMON_CODE C, EMPLOYEE D, COMMON_CODE E
+	 WHERE A.MTNG_RSRVT_ID = B.MTNG_RSRVT_ID
+	   AND B.MTNG_ROOM_TYPE_ID = C.CMMN_ID
+	   AND B.MTNG_RSRVT_EMP_ID = D.EMP_ID
+	   AND A.MTNG_TYPE_ID = E.CMMN_ID
+	</select>
+
+
+</mapper>
+
+
+
+
+

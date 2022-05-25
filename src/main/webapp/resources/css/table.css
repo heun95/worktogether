@@ -1,0 +1,192 @@
+@charset "UTF-8";
+
+.dataTables_wrapper.container-fluid {
+    padding: 0
+}
+
+div.dataTables_wrapper div.dataTables_filter {
+    text-align: right
+}
+
+@media (max-width:767px) {
+    div.dataTables_wrapper div.dataTables_filter {
+        text-align: center
+    }
+}
+
+div.dataTables_wrapper div.dataTables_filter input {
+    margin-left: .5em;
+    margin-right: 0
+}
+
+.datatable td:focus {
+    outline: 0
+}
+
+div.table-responsive>div.dataTables_wrapper>div.row>div[class^=col-]:first-child {
+    padding-left: 0
+}
+
+div.table-responsive>div.dataTables_wrapper>div.row>div[class^=col-]:last-child {
+    padding-right: 0
+}
+
+table.dataTable {
+    border-collapse: collapse !important;
+    margin-bottom: 15px !important
+}
+
+table.dataTable thead .sorting:before,
+table.dataTable thead .sorting_asc:before,
+table.dataTable thead .sorting_asc_disabled:before,
+table.dataTable thead .sorting_desc:before,
+table.dataTable thead .sorting_desc_disabled:before {
+    left: auto;
+    right: .5rem;
+    content: "\F0360";
+    font-family: "Material Design Icons";
+    font-size: 1rem;
+    top: 9px
+}
+
+table.dataTable thead .sorting:after,
+table.dataTable thead .sorting_asc:after,
+table.dataTable thead .sorting_asc_disabled:after,
+table.dataTable thead .sorting_desc:after,
+table.dataTable thead .sorting_desc_disabled:after {
+    left: auto;
+    right: .5em;
+    content: "\F035D";
+    font-family: "Material Design Icons";
+    top: 15px;
+    font-size: 1rem
+}
+
+table.dataTable thead tr td.sorting,
+table.dataTable thead tr td.sorting_asc,
+table.dataTable thead tr td.sorting_desc,
+table.dataTable thead tr th.sorting,
+table.dataTable thead tr th.sorting_asc,
+table.dataTable thead tr th.sorting_desc {
+    padding-left: 12px;
+    padding-right: 30px
+}
+
+table.dataTable tbody>tr.selected,
+table.dataTable tbody>tr>.selected {
+    background-color: rgba(108, 111, 245, .2)
+}
+
+table.dataTable tbody>tr.selected td,
+table.dataTable tbody>tr>.selected td {
+    border-color: rgba(108, 111, 245, .2);
+    color: #6c6ff5
+}
+
+table.dataTable tbody td:focus {
+    outline: 0 !important
+}
+
+table.dataTable tbody td.focus,
+table.dataTable tbody th.focus {
+    outline: 2px solid #6c6ff5 !important;
+    outline-offset: -1px;
+    background-color: rgba(108, 111, 245, .15)
+}
+
+.dataTables_info {
+    font-weight: 600
+}
+
+table.dataTable.dtr-inline.collapsed>tbody>tr[role=row]>td:first-child:before,
+table.dataTable.dtr-inline.collapsed>tbody>tr[role=row]>th:first-child:before {
+    -webkit-box-shadow: 0 5px 12px rgba(0, 0, 0, .1);
+    box-shadow: 0 5px 12px rgba(0, 0, 0, .1);
+    background-color: #6fbe36;
+    bottom: auto
+}
+
+table.dataTable.dtr-inline.collapsed>tbody>tr.parent>td:first-child:before,
+table.dataTable.dtr-inline.collapsed>tbody>tr.parent>th:first-child:before {
+    background-color: #ff5d5d
+}
+
+div.dt-button-info {
+    background-color: #6c6ff5;
+    border: none;
+    color: #fff;
+    -webkit-box-shadow: none;
+    box-shadow: none;
+    border-radius: 3px;
+    text-align: center;
+    z-index: 21
+}
+
+div.dt-button-info h2 {
+    border-bottom: none;
+    background-color: rgba(255, 255, 255, .2);
+    color: #fff
+}
+
+@media (max-width:767.98px) {
+
+    li.paginate_button.next,
+    li.paginate_button.previous {
+        display: inline-block;
+        font-size: 1.5rem
+    }
+
+    li.paginate_button {
+        display: none
+    }
+
+    .dataTables_paginate ul {
+        text-align: center;
+        display: block;
+        margin: 1rem 0 0 !important
+    }
+
+    div.dt-buttons {
+        display: inline-table;
+        margin-bottom: 1rem
+    }
+}
+
+.activate-select .sorting_1 {
+    background-color: #f8f9fa
+}
+
+.table-bordered {
+    border: 1px solid #eff2f7
+}
+
+.table.dataTable.dtr-inline.collapsed>tbody>tr>td,
+table.dataTable.dtr-inline.collapsed>tbody>tr>td {
+    position: relative
+}
+
+.table.dataTable.dtr-inline.collapsed>tbody>tr>td.dtr-control,
+table.dataTable.dtr-inline.collapsed>tbody>tr>td.dtr-control {
+    padding-left: 30px
+}
+
+.table.dataTable.dtr-inline.collapsed>tbody>tr>td.dtr-control:before,
+table.dataTable.dtr-inline.collapsed>tbody>tr>td.dtr-control:before {
+    top: 64%;
+    left: 5px;
+    height: 14px;
+    width: 14px;
+    margin-top: -14px;
+    display: block;
+    position: absolute;
+    color: #fff;
+    border: 2px solid #fff;
+    border-radius: 14px;
+    -webkit-box-sizing: content-box;
+    box-sizing: content-box;
+    text-align: center;
+    text-indent: 0 !important;
+    line-height: 12px;
+    content: '+';
+    background-color: #6c6ff5
+}

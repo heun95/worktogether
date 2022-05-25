@@ -1,0 +1,11 @@
+@charset "UTF-8";
+
+#page-header-notifications-dropdown .badge{
+	line-height: inherit;
+}
+#page-header-notifications-dropdown .noti-dot{
+	height: 15px;
+	width: 15px;
+	right: 7px;
+	top: 18px;
+}

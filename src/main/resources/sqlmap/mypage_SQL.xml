@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.workTogether.mypage.mapper.MypageMapper">
+
+<!-- 개인정보 조회 -->
+<select id="selectEmpl" parameterType="hashMap" resultType="employeeVO">
+SELECT EMP_ID,
+       EMP_PASSWORD,
+       EMP_NAME,
+       EMP_ADDR1||'__'||EMP_ADDR2,
+       EMP_EMAIL,
+       EMP_TEL 
+  FROM EMPLOYEE
+ WHERE EMP_ID=#{empId}
+  
+</select>
+
+<!-- 개인정보 수정  -->
+<update id="updateEmpl" parameterType="hashMap">
+UPDATE EMPLOYEE
+   SET EMP_PASSWORD=#{empPassword}
+ WHERE EMP_ID=#{empId}
+ 
+</update>
+
+
+
+</mapper>

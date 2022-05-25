@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.workTogether.attach.mapper.AttachMapper">
+
+	<!-- attach 테이블로 첨부파일 insert -->
+	<insert id="insertAttachFiles" parameterType="attachVO">
+		<foreach collection="list" item="item" index="index"
+			open="INSERT ALL " separator=" " close="SELECT * FROM DUAL">
+			INTO ATTACH (
+			 ATCH_ID
+			,ATCH_REL_ID
+			,ATCH_PATH
+			,ATCH_NAME
+			,ATCH_OLDNAME
+			,ATCH_EXTNS
+			,ATCH_WRT_DATE
+			,ATCH_SIZE
+			,ATCH_WRTR
+			) VALUES (
+			(SELECT 'ATTA'||LPAD(NVL(MAX(SUBSTR(ATCH_ID,5,5)),0)+1+#{index},5,'0') FROM ATTACH)
+			,#{item.atchRelId}
+			,#{item.atchPath}
+			,#{item.atchName}
+			,#{item.atchOldname}
+			,#{item.atchExtns}
+			,SYSDATE
+			,#{item.atchSize}
+			,#{item.atchWrtr}
+			)
+		</foreach>
+	</insert>
+
+	<!-- 첨부파일 조회 -->
+	<select id="selectFileList" parameterType="string"
+		resultType="attachVO">
+		SELECT
+			ATCH_ID
+			, ATCH_REL_ID
+			, ATCH_PATH, ATCH_NAME
+			, ATCH_OLDNAME
+			, ATCH_EXTNS
+			, ATCH_WRT_DATE
+			, ATCH_DEL_DATE
+			, ATCH_SIZE
+		FROM ATTACH
+		WHERE
+		ATCH_REL_ID = #{atchRelId}
+		AND ATCH_DEL_DATE IS NULL
+	</select>
+	
+	<!-- 첨부파일 삭제 -->
+	<delete id="fileDelete" parameterType="String">
+		UPDATE ATTACH
+		SET ATCH_DEL_DATE =
+		SYSDATE
+		WHERE ATCH_ID = #{atchId}
+	</delete>
+
+</mapper>
+
+
+

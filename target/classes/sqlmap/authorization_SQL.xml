@@ -1,0 +1,485 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.workTogether.authorization.mapper.AuthorizationMapper">
+	
+	<!-- 조직도(부서,팀,직원 포함)를 위한 MAP(시작)-->
+	<resultMap type="departmentVO" id="departmentMap">
+		<id property="topDeptId" column="TOP_DEPT_ID" />
+		<result property="deptLevel" column="DEPT_LEVEL" />
+		<result property="topDeptName" column="TOP_DEPT_NAME" />
+		<collection property="deptList" resultMap="deptListMap" />
+	</resultMap>
+	
+	<resultMap type="departmentVO" id="deptListMap">
+		<id property="deptId" column="DEPT_ID" />
+		<result property="deptName" column="DEPT_NAME" />
+		<collection property="employeeList" resultMap="employeeMap" />
+	</resultMap>
+	
+	<resultMap type="employeeVO" id="employeeMap">
+		<result property="empId" column="EMP_ID" />
+		<result property="empName" column="EMP_NAME" />
+		<result property="empPosition" column="EMP_POSITION" />
+		<result property="cmmnGroupName" column="CMMN_GROUP_NAME" />
+		<result property="deptName" column="DEPT_NAME2" />
+	</resultMap>
+	<!-- 조직도(부서,팀,직원 포함)를 위한 MAP(끝)-->
+		
+	<!-- 조직도(직원없는 부서 제외) 조회 : SELECT - LIST -->
+	<select id="getTreeList" resultMap="departmentMap">
+		SELECT A.DEPT_ID, 
+			   A.TOP_DEPT_ID, 
+			   A.DEPT_LEVEL, 
+			   A.DEPT_NAME, 
+			   A.EMP_ID,
+		       A.EMP_NAME, 
+		       C.DEPT_NAME AS TOP_DEPT_NAME, 
+		       A.EMP_POSITION, 
+		       F.CMMN_GROUP_NAME, 
+		       A.DEPT_NAME AS DEPT_NAME2
+		  FROM(
+		        SELECT D.DEPT_ID, D.TOP_DEPT_ID, D.DEPT_LEVEL, D.DEPT_NAME, E.EMP_ID,
+		               E.EMP_NAME, E.EMP_POSITION
+		          FROM( 
+			        	SELECT DEPT_ID, TOP_DEPT_ID, DEPT_LEVEL, DEPT_NAME
+			              FROM DEPARTMENT 
+			             START WITH TOP_DEPT_ID IS NULL
+			             CONNECT BY PRIOR DEPT_ID = TOP_DEPT_ID
+			             ORDER SIBLINGS BY DEPT_ID
+		               ) D INNER JOIN EMPLOYEE E ON(D.DEPT_ID = E.DEPT_ID)
+		          ORDER BY D.DEPT_ID, E.EMP_POSITION DESC
+		       ) A, DEPARTMENT C, COMMON_CODE F
+		 WHERE A.TOP_DEPT_ID = C.DEPT_ID 
+		   AND A.EMP_POSITION = F.CMMN_ID
+	</select>
+	
+	<!-- 문서양식 조회 : SELECT - LIST -->
+	<select id="getDocFormList" resultType="commonCodeVO">
+		SELECT CMMN_ID, CMMN_GROUP_ID, CMMN_GROUP_NAME, CMMN_NM1, CMMN_NM2, 
+			   CMMN_NM3, CMMN_OPT1, CMMN_OPT2, CMMN_OPT3, CMMN_YN, CMMN_CLOB
+		  FROM COMMON_CODE
+		 WHERE CMMN_GROUP_ID = 'A1'
+	</select>
+	
+	<!-- 보존연한 조회 : SELECT - LIST -->
+	<select id="getDocRetentionList" resultType="commonCodeVO">
+		SELECT CMMN_ID, CMMN_GROUP_ID, CMMN_GROUP_NAME, CMMN_NM1, CMMN_NM2, 
+			   CMMN_NM3, CMMN_OPT1, CMMN_OPT2, CMMN_OPT3, CMMN_YN, CMMN_CLOB 
+		  FROM COMMON_CODE
+		 WHERE CMMN_GROUP_ID = 'A4'
+	</select>
+	
+	<!-- 결재문서 등록 : INSERT -->
+	<insert id="insertAtrzDoc" parameterType="atrzDocVO">
+		<selectKey keyProperty="docId" resultType="String" order="BEFORE" >
+			SELECT 'ATDO' || LPAD(NVL(MAX(SUBSTR(DOC_ID,5,5)),0)+1,5,'0') FROM ATRZ_DOC
+		</selectKey>
+		INSERT INTO ATRZ_DOC(
+			DOC_ID, DOC_TITLE, DOC_CNTNT, DOC_STATE, ATRZ_LEVEL, 
+			DOC_TYPE_ID, DOC_MDFY_DT, DOC_WRT_DT, DOC_WRTR, ATRZ_LINE_STR, 
+			DOC_WRTR_NAME, DOC_RETENTION, DOC_DEPT_NAME, DOC_TYPE_NAME, ATRZ_LINE_ID,
+			DOC_CONTENT_PATH)
+		VALUES(
+			#{docId}, #{docTitle}, #{docCntnt}, #{docState}, 1, 
+			#{docTypeId}, SYSDATE, SYSDATE, #{docWrtr}, #{atrzLineStr}, 
+			#{docWrtrName}, #{docRetention}, #{docDeptName}, #{docTypeName}, #{atrzLineId},
+			#{docContentPath})
+	</insert>
+
+	<!-- 결재선 등록 : ISNERT -->
+	<insert id="insertAtrzLine" parameterType="atrzLineVO">
+		<selectKey keyProperty="atrzLineId" resultType="String" order="BEFORE">
+			SELECT 'ATLN' || LPAD(NVL(MAX(SUBSTR(ATRZ_LINE_ID,5,5)),0)+1,5,'0') FROM ATRZ_LINE
+		</selectKey>
+		INSERT INTO ATRZ_LINE(
+			ATRZ_LINE_ID, ATRZ_LINE_NAME, ATRZ_LINE_DT, ATRZ_APRV_ID, ATRZ_LINE_STR)
+		VALUES(
+			#{atrzLineId}, #{atrzLineName}, SYSDATE, #{atrzAprvId},#{atrzLineStr})
+	</insert>
+	
+	<!-- 결재선상세 등록 : INSERT -->
+	<insert id="insertAtrzLineDetail" parameterType="atrzLineDetailVO">
+		INSERT INTO ATRZ_LINE_DETAIL(
+			ATRZ_LINE_ID, ATRZ_LINE_LEVEL, ATRZ_APRV_ID, ATRZ_NAME, POSITION_NAME, DEPT_NAME)
+		VALUES (
+			#{atrzLineId}, #{atrzLineLevel}, #{atrzAprvId}, #{atrzName}, #{positionName}, #{deptName})
+	</insert>
+	
+	<!-- 임시문서 조회 : SELECT - LIST -->
+	<select id="getTempDocList" resultType="atrzDocVO" parameterType="string">
+	    SELECT DOC_ID, DOC_TITLE, DOC_STATE, ATRZ_LEVEL, DOC_TYPE_ID, 
+	           DOC_MDFY_DT, DOC_WRT_DT, DOC_WRTR, ATRZ_LINE_STR, DOC_WRTR_NAME, 
+	           DOC_RETENTION, DOC_DEPT_NAME, DOC_CNTNT, DOC_TYPE_NAME, ATRZ_LINE_ID
+	      FROM ATRZ_DOC
+	      WHERE DOC_WRTR LIKE #{docWrtr}
+	        AND DOC_STATE LIKE '임시저장'
+	      ORDER BY DOC_WRT_DT DESC
+	</select>
+	
+	<!-- 결재문서(결재선상세 포함)를 위한 MAP(시작)-->
+	<resultMap type="atrzDocVO" id="atrzDocMap">
+		<id property="docId" column="DOC_ID" />
+		<result property="docTitle" column="DOC_TITLE" />
+		<result property="docState" column="DOC_STATE" />
+		<result property="atrzLevel" column="ATRZ_LEVEL" />
+		<result property="docTypeId" column="DOC_TYPE_ID" />
+		<result property="docMdfyDt" column="DOC_MDFY_DT" />
+		<result property="docWrtDt" column="DOC_WRT_DT" />
+		<result property="docWrtr" column="DOC_WRTR" />
+		<result property="atrzLineStr" column="ATRZ_LINE_STR" />
+		<result property="docWrtrName" column="DOC_WRTR_NAME" />
+		<result property="docRetention" column="DOC_RETENTION" />
+		<result property="docDeptName" column="DOC_DEPT_NAME" />
+		<result property="docCntnt" column="DOC_CNTNT" />
+		<result property="docTypeName" column="DOC_TYPE_NAME" />
+		<result property="atrzLineId" column="ATRZ_LINE_ID" />
+		<result property="atrzState" column="ATRZ_STATE" />
+		<result property="docContentPath" column="DOC_CONTENT_PATH" />
+		
+		<collection property="atrzLineDetailList" resultMap="atrzLineDetailMap" />
+	</resultMap>
+	
+	<resultMap type="atrzLineDetailVO" id="atrzLineDetailMap">
+		<result property="atrzLineId" column="ATRZ_LINE_ID" />
+		<result property="atrzLineLevel" column="ATRZ_LINE_LEVEL" />
+		<result property="atrzAprvId" column="ATRZ_APRV_ID" />
+		<result property="atrzAprvId" column="ATRZ_APRV_ID2" />
+		<result property="atrzName" column="ATRZ_NAME" />
+		<result property="positionName" column="POSITION_NAME" />
+		<result property="deptName" column="DEPT_NAME" />
+		<result property="positionId" column="CMMN_ID" />
+		
+	</resultMap>
+	<!-- 결재문서(결재선상세 포함)를 위한 MAP(시작)-->
+	
+	<!-- 임시문서 조회 : SELECT - DETAIL -->
+	<select id="getTempDoc" resultMap="atrzDocMap" parameterType="string">
+		SELECT DOC_ID, DOC_TITLE, DOC_STATE, ATRZ_LEVEL, DOC_TYPE_ID, 
+		       DOC_MDFY_DT, DOC_WRT_DT, DOC_WRTR, ATRZ_LINE_STR, DOC_WRTR_NAME, 
+		       DOC_RETENTION, DOC_DEPT_NAME, DOC_CNTNT, DOC_TYPE_NAME, DOC_CONTENT_PATH,
+               B.ATRZ_LINE_ID, B.ATRZ_LINE_LEVEL, B.ATRZ_APRV_ID, B.ATRZ_NAME, B.POSITION_NAME,
+               B.DEPT_NAME,
+               C.CMMN_ID
+		  FROM ATRZ_DOC A 
+            LEFT OUTER JOIN ATRZ_LINE_DETAIL B ON(A.ATRZ_LINE_ID = B.ATRZ_LINE_ID)
+            LEFT OUTER JOIN COMMON_CODE C ON(B.POSITION_NAME = C.CMMN_GROUP_NAME)
+		 WHERE DOC_ID = #{docId}
+	</select>
+	
+	<!-- 결재선상세 조회 : SELECT - LIST -->
+	<select id="getAtrzLineDetailList" resultType="atrzLineDetailVO" parameterType="string">
+		SELECT ATRZ_LINE_ID, ATRZ_LINE_LEVEL, ATRZ_APRV_ID, ATRZ_NAME, POSITION_NAME, DEPT_NAME
+		  FROM ATRZ_LINE_DETAIL
+		 WHERE ATRZ_LINE_ID LIKE #{atrzLineId}
+	</select>
+
+	<!-- 임시문서(ALL) 수정 : UPDATE -->
+	<update id="updateTempDoc" parameterType="atrzDocVO">
+		UPDATE ATRZ_DOC
+		   SET DOC_TITLE = #{docTitle},
+		       DOC_STATE = #{docState},
+		       DOC_TYPE_ID = #{docTypeId},
+		       DOC_WRT_DT = SYSDATE,
+		       ATRZ_LINE_STR = #{atrzLineStr},
+		       DOC_RETENTION = #{docRetention},
+		       DOC_CNTNT = #{docCntnt},
+		       DOC_TYPE_NAME = #{docTypeName},
+		       ATRZ_LINE_ID = #{atrzLineId},
+		       DOC_CONTENT_PATH = #{docContentPath},
+		       DOC_MDFY_DT = SYSDATE  
+		 WHERE DOC_ID = #{docId}
+	</update>
+	
+	<!-- 결재선상세 삭제 : DELETE -->
+	<delete id="deleteAtrzLineDetail" parameterType="string">
+		DELETE FROM ATRZ_LINE_DETAIL WHERE ATRZ_LINE_ID = #{atrzLineId}
+	</delete>
+
+	<!-- 결재선 삭제 : DELETE -->
+	<delete id="deleteAtrzLine" parameterType="string">
+		DELETE FROM ATRZ_LINE WHERE ATRZ_LINE_ID = #{atrzLineId}
+	</delete>
+	
+	<!-- 보낸문서함 조회 : SELECT - LIST -->
+	<select id="getSendDocList" resultMap="atrzDocMap" parameterType="string">
+		SELECT CASE DOC_STATE
+		         WHEN '대기중' THEN '대기중'
+		         WHEN '심사중' THEN '진행중'
+		         WHEN '결재완료' THEN '결재완료'
+		         WHEN '반려' THEN '반려'
+			   END AS ATRZ_STATE,
+			   DOC_ID, DOC_TITLE, DOC_STATE, ATRZ_LEVEL, DOC_TYPE_ID, 
+			   DOC_MDFY_DT, DOC_WRT_DT, DOC_WRTR, ATRZ_LINE_STR, DOC_WRTR_NAME, 
+			   DOC_RETENTION, DOC_DEPT_NAME, DOC_CNTNT, DOC_TYPE_NAME, ATRZ_LINE_ID
+		  FROM ATRZ_DOC
+		 WHERE DOC_WRTR LIKE #{docWrtr}
+		   AND DOC_STATE NOT LIKE '임시저장'
+		 ORDER BY DOC_MDFY_DT DESC,
+			 DECODE(ATRZ_STATE,'진행중',1,'대기중',2,'반려',3,'결재완료',4) ASC, 
+			 DOC_WRT_DT DESC
+	</select>
+	
+	<!-- 보낸문서함 조회 : SELECT - DETAIL -->
+	<select id="getSendDoc" resultMap="atrzDocMap" parameterType="string">
+		SELECT CASE DOC_STATE
+		         WHEN '대기중' THEN '대기중'
+		         WHEN '심사중' THEN '진행중'
+		         WHEN '결재완료' THEN '결재완료'
+		         WHEN '반려' THEN '반려'
+			   END AS ATRZ_STATE,
+			   DOC_ID, DOC_TITLE, DOC_STATE, ATRZ_LEVEL, DOC_TYPE_ID, 
+		       DOC_MDFY_DT, DOC_WRT_DT, DOC_WRTR, ATRZ_LINE_STR, DOC_WRTR_NAME, 
+		       DOC_RETENTION, DOC_DEPT_NAME, DOC_CNTNT, DOC_TYPE_NAME, DOC_CONTENT_PATH,
+               B.ATRZ_LINE_ID, B.ATRZ_LINE_LEVEL, B.ATRZ_APRV_ID, B.ATRZ_NAME, B.POSITION_NAME,
+               B.DEPT_NAME
+		  FROM ATRZ_DOC A LEFT OUTER JOIN ATRZ_LINE_DETAIL B ON(A.ATRZ_LINE_ID = B.ATRZ_LINE_ID)
+		 WHERE DOC_ID = #{docId}
+	</select>
+	
+	<!-- 받은문서함 조회 : SELECT - LIST -->
+	<select id="getReceiveDocList" resultMap="atrzDocMap" parameterType="string">
+		<![CDATA[
+		SELECT CASE WHEN A.DOC_STATE LIKE '대기중' THEN '미결재'
+	            WHEN A.DOC_STATE LIKE '심사중' THEN
+	                CASE WHEN B.ATRZ_TYPE_ID LIKE '대기중' THEN '미결재'
+	                ELSE '진행중' END
+	            WHEN A.DOC_STATE LIKE '결재완료' THEN '결재완료'
+	            WHEN A.DOC_STATE LIKE '반려' THEN '반려'
+	        END AS ATRZ_STATE,
+	           A.DOC_ID, A.DOC_TITLE, A.DOC_STATE, A.ATRZ_LEVEL, A.DOC_TYPE_ID, 
+	           A.DOC_MDFY_DT, A.DOC_WRT_DT, A.DOC_WRTR, A.ATRZ_LINE_STR, A.DOC_WRTR_NAME, 
+	           A.DOC_RETENTION, A.DOC_DEPT_NAME, A.DOC_CNTNT, A.DOC_TYPE_NAME, A.ATRZ_LINE_ID,
+	           B.ATRZ_ID, B.ATRZ_LEVEL, B.ATRZ_TYPE_ID, B.ATRZ_CMT, B.ATRZ_WRT_DT, B.ATRZ_APRV_DT, B.ATRZ_APRV_ID
+	      FROM ATRZ_DOC A, ATRZ B
+	     WHERE A.DOC_STATE NOT LIKE '임시저장'
+	       AND B.ATRZ_APRV_ID LIKE #{atrzAprvId}
+	       AND A.ATRZ_LEVEL >= B.ATRZ_LEVEL
+	       AND A.DOC_ID = B.DOC_ID
+	     ORDER BY DECODE(ATRZ_STATE,'미결재',1) ASC, DOC_MDFY_DT DESC, A.DOC_WRT_DT DESC
+	     ]]>
+	</select>
+	
+	<!-- 홈에서 사용하는 보낸결제리스트 -->
+	<select id="mainDocList" resultMap="atrzDocMap" parameterType="hashMap">
+		SELECT
+		      T.RNUM   
+		    , T.ATRZ_STATE
+		    , T.DOC_ID
+		    , T.DOC_TITLE
+		    , T.DOC_WRT_DT
+		    , T.DOC_WRTR
+		    , T.DOC_WRTR_NAME
+		FROM (
+				SELECT 
+					   <if test="division == 'receive'">
+                       ROW_NUMBER() OVER(ORDER BY DOC_MDFY_DT DESC, DECODE(A.DOC_STATE,'미결재',1,'진행중',2,'반려',3,'결재완료',4) ASC, A.DOC_WRT_DT DESC) RNUM  
+                      ,CASE WHEN A.DOC_STATE LIKE '대기중' THEN '미결재'
+			            	WHEN A.DOC_STATE LIKE '심사중' THEN
+			           CASE WHEN B.ATRZ_TYPE_ID LIKE '대기중' THEN '미결재'
+			                	ELSE '진행중' END
+			            	WHEN A.DOC_STATE LIKE '결재완료' THEN '결재완료'
+			            	WHEN A.DOC_STATE LIKE '반려' THEN '반려'
+		               END AS ATRZ_STATE
+					   </if>
+					   <if test="division == 'send'">
+					   ROW_NUMBER() OVER(ORDER BY DOC_MDFY_DT DESC, DECODE(A.DOC_STATE,'진행중',1,'대기중',2,'반려',3,'결재완료',4) ASC, A.DOC_WRT_DT DESC) RNUM 
+					   ,CASE A.DOC_STATE
+				         WHEN '대기중' THEN '대기중'
+				         WHEN '심사중' THEN '진행중'
+				         WHEN '결재완료' THEN '결재완료'
+				         WHEN '반려' THEN '반려'
+					   END AS ATRZ_STATE
+					   </if>
+		               , A.DOC_ID
+		               , A.DOC_TITLE
+		               , A.DOC_WRT_DT
+		               , A.DOC_WRTR
+		               , A.DOC_WRTR_NAME
+			      FROM ATRZ_DOC A, ATRZ B
+			     WHERE 1=1
+			       AND A.DOC_ID = B.DOC_ID
+			       <if test="division == 'receive'">
+			       AND A.DOC_STATE NOT LIKE '임시저장'
+			       AND B.ATRZ_APRV_ID LIKE #{userId}
+			       <![CDATA[
+			       AND A.ATRZ_LEVEL >= B.ATRZ_LEVEL 
+			       ]]> 
+				  </if>
+				  <if test="division == 'send'">
+				   AND DOC_WRTR LIKE #{userId}
+				   AND DOC_STATE NOT LIKE '임시저장'
+				  </if>
+			      ) T
+		WHERE T.RNUM BETWEEN #{start} AND #{end}  
+		<if test="division == 'receive'">
+			ORDER BY DECODE(T.ATRZ_STATE,'미결재',1) ASC
+		</if>
+	</select>
+	
+	<!-- 홈에서 사용하는 결재 카운트 -->
+	<select id="listCount" resultType="int" parameterType="hashMap">
+		SELECT 
+			   COUNT(*)
+	      FROM ATRZ_DOC A, ATRZ B
+	     WHERE 1=1
+	       AND A.DOC_ID = B.DOC_ID
+	       <if test="division == 'receive'">
+	       AND A.DOC_STATE NOT LIKE '임시저장'
+	       AND B.ATRZ_APRV_ID LIKE #{userId}
+	       <![CDATA[
+	       AND A.ATRZ_LEVEL >= B.ATRZ_LEVEL 
+	       ]]> 
+		  </if>
+		  <if test="division == 'send'">
+		   AND DOC_WRTR LIKE #{userId}
+		   AND DOC_STATE NOT LIKE '임시저장'
+		  </if>
+
+	</select>
+	
+	
+	<!-- 받은문서함 조회 : SELECT - DETAIL -->
+	<select id="getReceiveDoc" resultMap="atrzDocMap" parameterType="hashMap">
+		SELECT CASE WHEN A.DOC_STATE LIKE '대기중' THEN '미결재'
+            WHEN A.DOC_STATE LIKE '심사중' THEN
+                CASE WHEN B.ATRZ_TYPE_ID LIKE '대기중' THEN '미결재'
+                ELSE '진행중' END
+            WHEN A.DOC_STATE LIKE '결재완료' THEN '결재완료'
+            WHEN A.DOC_STATE LIKE '반려' THEN '반려'
+	        END AS ATRZ_STATE,
+	           A.DOC_ID, A.DOC_TITLE, A.DOC_STATE, A.ATRZ_LEVEL, A.DOC_TYPE_ID, 
+	           A.DOC_MDFY_DT, A.DOC_WRT_DT, A.DOC_WRTR, A.ATRZ_LINE_STR, A.DOC_WRTR_NAME, 
+	           A.DOC_RETENTION, A.DOC_DEPT_NAME, A.DOC_CNTNT, A.DOC_TYPE_NAME, A.ATRZ_LINE_ID, A.DOC_CONTENT_PATH,
+	           B.ATRZ_ID, B.ATRZ_LEVEL, B.ATRZ_TYPE_ID, B.ATRZ_CMT, B.ATRZ_WRT_DT, B.ATRZ_APRV_DT, B.ATRZ_APRV_ID,
+	           C.ATRZ_LINE_ID, C.ATRZ_LINE_LEVEL, C.ATRZ_APRV_ID AS ATRZ_APRV_ID2, C.ATRZ_NAME, C.POSITION_NAME,
+	           C.DEPT_NAME
+	      FROM ATRZ_DOC A, ATRZ B, ATRZ_LINE_DETAIL C
+	     WHERE A.DOC_STATE NOT LIKE '임시저장'
+	       <![CDATA[
+	       AND A.ATRZ_LEVEL >= B.ATRZ_LEVEL
+	       ]]>
+	       AND A.DOC_ID = B.DOC_ID
+	       AND A.ATRZ_LINE_ID = C.ATRZ_LINE_ID
+	       AND B.ATRZ_APRV_ID LIKE #{atrzAprvId}
+	       AND A.DOC_ID LIKE #{docId}
+	     ORDER BY DECODE(ATRZ_STATE,'미결재',1,'진행중',2,'반려',3,'결재완료',4) ASC, A.DOC_WRT_DT DESC
+	    
+	</select>
+	
+	<!-- 결재 등록 : INSERT -->
+	<insert id="insertAtrz" parameterType="atrzVO">	
+		<selectKey keyProperty="atrzId" resultType="String" order="BEFORE" >
+			SELECT 'ATRZ' || LPAD(NVL(MAX(SUBSTR(ATRZ_ID,5,5)),0)+1,5,'0') FROM ATRZ
+		</selectKey>
+		INSERT INTO ATRZ(
+			ATRZ_ID, DOC_ID, ATRZ_LEVEL, ATRZ_TYPE_ID, ATRZ_CMT, 
+			ATRZ_WRT_DT, ATRZ_APRV_ID, ATRZ_SIGN)
+		VALUES(
+			#{atrzId}, #{docId}, #{atrzLevel}, #{atrzTypeId}, #{atrzCmt},
+			SYSDATE, #{atrzAprvId}, #{atrzSign})
+	</insert>
+	
+	<!-- 첨부파일 조회 : SELECT - ONE -->
+	<select id="getAttach" resultType="attachVO" parameterType="string">
+		SELECT ATCH_ID, ATCH_REL_ID, ATCH_PATH, ATCH_NAME, ATCH_OLDNAME, 
+			   ATCH_EXTNS, ATCH_WRT_DATE, ATCH_DEL_DATE
+		  FROM ATTACH
+		 WHERE ATCH_REL_ID LIKE #{atchRelId}
+	</select>
+	
+	<!-- 첨부파일 삭제 : DELETE -->
+	<delete id="deleteAttach" parameterType="string">
+		DELETE FROM ATTACH
+		 WHERE ATCH_REL_ID LIKE #{atchRelId}
+	</delete>
+	
+	<!-- 직원(전자서명) 수정 : UPDATE -->
+	<update id="updateEmpSign" parameterType="hashMap">
+		UPDATE EMPLOYEE
+		   SET EMP_SIGN = #{empSign}
+		 WHERE EMP_ID = #{empId}
+	</update>
+	
+	<!-- 직원 조회 : SELECT - ONE -->
+	<select id="getEmployee" resultType="employeeVO" parameterType="string">
+		SELECT EMP_ID, EMP_PASSWORD, EMP_NAME, EMP_POSITION, DEPT_ID, 
+			   EMP_PHOTO, EMP_BIRTH, EMP_REG, EMP_EMAIL, EMP_RESUME, 
+			   EMP_ECNY_YMD, EMP_RETIRE_YMD, EMP_STATE, EMP_QRCODE, EMP_SIGN, 
+			   ENABLED, EMP_TEL, EMP_POSTNO, EMP_ADDR1, EMP_ADDR2
+		  FROM EMPLOYEE
+		 WHERE EMP_ID = #{empId}
+	</select>
+	
+	<!-- 결재 조회 : SELECT - ONE -->
+	<select id="getAtrz" resultType="atrzVO" parameterType="hashMap">
+		SELECT ATRZ_ID, DOC_ID, ATRZ_LEVEL, ATRZ_TYPE_ID, ATRZ_CMT, 
+			   ATRZ_WRT_DT, ATRZ_APRV_DT, ATRZ_APRV_ID, ATRZ_SIGN
+		  FROM ATRZ
+		 WHERE DOC_ID = #{docId}
+		   AND ATRZ_APRV_ID = #{atrzAprvId}
+	</select>
+	
+	<!-- 결재문서(문서상태,결재단계,문서수정일자) 수정 : UPDATE -->
+	<update id="updateAtrzDoc" parameterType="atrzVO">
+		<selectKey keyProperty="atrzCount" resultType="int" order="BEFORE">
+			SELECT COUNT(*) FROM ATRZ WHERE DOC_ID = #{docId}
+		</selectKey>
+		
+		UPDATE ATRZ_DOC
+		   SET 
+			<if test="atrzTypeId == '반려'">
+			  DOC_STATE = '반려',
+			  ATRZ_LEVEL = 8,
+			</if>
+			<if test="atrzTypeId == '승인'"> 
+		   	  DOC_STATE = 
+		          CASE 
+		          <![CDATA[
+		            WHEN ATRZ_LEVEL < #{atrzCount} THEN '심사중' 
+		            WHEN ATRZ_LEVEL = #{atrzCount} THEN '결재완료' 
+		          ]]>
+		          END,
+		       ATRZ_LEVEL =     
+		          CASE
+		          <![CDATA[
+		            WHEN ATRZ_LEVEL < #{atrzCount} THEN ATRZ_LEVEL+1
+		            WHEN ATRZ_LEVEL = #{atrzCount} THEN 9
+		          ]]>
+		          END,
+		     </if>
+		       DOC_MDFY_DT = SYSDATE
+		 WHERE DOC_ID = #{docId}
+ 		 
+ 	</update>
+	
+	<!-- 결재(결재결과,전자서명,결재일자) 수정 : UPDATE -->
+	<update id="updateAtrz" parameterType="atrzVO">
+		UPDATE ATRZ
+		   SET ATRZ_TYPE_ID = #{atrzTypeId},
+		       ATRZ_SIGN = #{atrzSign},
+		       ATRZ_APRV_DT = SYSDATE
+		 WHERE DOC_ID = #{docId}
+		   AND ATRZ_APRV_ID = #{atrzAprvId}
+	</update>
+	
+	<!-- 결재문서(문서코드) 조회 -->
+	<select id="getMaxDocId" resultType="string">
+		SELECT 'ATDO' || LPAD(NVL(MAX(SUBSTR(DOC_ID,5,5)),0)+1,5,'0') FROM ATRZ_DOC
+	</select>
+	
+	<!-- 다음 결재자 리스트   -->	
+	<select id="getNextAtrzList" resultType="atrzVO" parameterType="string">
+		SELECT ATRZ_ID, DOC_ID, ATRZ_LEVEL, ATRZ_TYPE_ID, ATRZ_CMT, 
+		       ATRZ_WRT_DT, ATRZ_APRV_DT, ATRZ_APRV_ID, ATRZ_SIGN
+		  FROM ATRZ A
+		 WHERE DOC_ID = #{docId}
+		   AND ATRZ_TYPE_ID = '대기중'
+		 ORDER BY ATRZ_LEVEL
+	</select>
+	
+</mapper>
+
+
+
+
+

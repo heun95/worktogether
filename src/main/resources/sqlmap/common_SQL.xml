@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.workTogether.common.mapper.CommonMapper">
+	
+	<!-- 조직도(부서,팀,직원 포함)를 위한 MAP(시작)-->
+	<resultMap type="departmentVO" id="departmentMap">
+		<id property="topDeptId" column="TOP_DEPT_ID" />
+		<result property="deptLevel" column="DEPT_LEVEL" />
+		<result property="topDeptName" column="TOP_DEPT_NAME" />
+		<collection property="deptList" resultMap="deptListMap" />
+	</resultMap>
+	
+	<resultMap type="departmentVO" id="deptListMap">
+		<id property="deptId" column="DEPT_ID" />
+		<result property="deptName" column="DEPT_NAME" />
+		<collection property="employeeList" resultMap="employeeMap" />
+	</resultMap>
+	
+	<resultMap type="employeeVO" id="employeeMap">
+		<result property="empId" column="EMP_ID" />
+		<result property="empName" column="EMP_NAME" />
+		<result property="empPosition" column="EMP_POSITION" />
+		<result property="cmmnGroupName" column="CMMN_GROUP_NAME" />
+		<result property="deptName" column="DEPT_NAME2" />
+	</resultMap>
+	<!-- 조직도(부서,팀,직원 포함)를 위한 MAP(끝)-->
+	
+	<!-- 출퇴근시간 조회 -->
+	<select id="atndnDaily" parameterType="String" resultType="atndnDlyVO">
+		    SELECT ATNDN_STRT_DT
+		          ,ATNDN_END_DT
+		    FROM ATNDN_DLY 
+		    WHERE EMP_ID = #{userId}
+		    AND TO_CHAR(ATNDN_DLY_DT,'YYYYMMDD') = TO_CHAR(SYSDATE,'YYYYMMDD') 
+	</select>
+		
+	<!-- 조직도 조회 : SELECT - LIST -->
+	<select id="getTreeList" resultMap="departmentMap" parameterType="string">
+		<if test="treeSelect == 'treeSome'">
+			SELECT A.DEPT_ID, 
+				   A.TOP_DEPT_ID, 
+				   A.DEPT_LEVEL, 
+				   A.DEPT_NAME, 
+				   A.EMP_ID,
+			       A.EMP_NAME, 
+			       C.DEPT_NAME AS TOP_DEPT_NAME, 
+			       A.EMP_POSITION, 
+			       F.CMMN_GROUP_NAME, 
+			       A.DEPT_NAME AS DEPT_NAME2
+			  FROM(
+			        SELECT D.DEPT_ID, D.TOP_DEPT_ID, D.DEPT_LEVEL, D.DEPT_NAME, E.EMP_ID,
+			               E.EMP_NAME, E.EMP_POSITION
+			          FROM( 
+				        	SELECT DEPT_ID, TOP_DEPT_ID, DEPT_LEVEL, DEPT_NAME
+				              FROM DEPARTMENT 
+				             START WITH TOP_DEPT_ID IS NULL
+				             CONNECT BY PRIOR DEPT_ID = TOP_DEPT_ID
+				             ORDER SIBLINGS BY DEPT_ID
+			               ) D INNER JOIN EMPLOYEE E ON(D.DEPT_ID = E.DEPT_ID)
+			          ORDER BY D.DEPT_ID, E.EMP_POSITION DESC
+			       ) A, DEPARTMENT C, COMMON_CODE F
+			 WHERE A.TOP_DEPT_ID = C.DEPT_ID 
+			   AND A.EMP_POSITION = F.CMMN_ID
+    	</if>
+    	<if test="treeSelect == 'treeAll'">
+	    	SELECT A.DEPT_ID, 
+			       A.TOP_DEPT_ID, 
+			       A.DEPT_LEVEL, 
+			       A.DEPT_NAME, 
+			       A.EMP_ID,
+			       A.EMP_NAME, 
+			       C.DEPT_NAME AS TOP_DEPT_NAME, 
+			       A.EMP_POSITION, 
+			       F.CMMN_GROUP_NAME, 
+			       A.DEPT_NAME AS DEPT_NAME2
+			  FROM(
+			        SELECT D.DEPT_ID, D.TOP_DEPT_ID, D.DEPT_LEVEL, D.DEPT_NAME, E.EMP_ID,
+			               E.EMP_NAME, E.EMP_POSITION
+			          FROM( 
+			                SELECT DEPT_ID, TOP_DEPT_ID, DEPT_LEVEL, DEPT_NAME
+			                  FROM DEPARTMENT 
+			                 START WITH TOP_DEPT_ID IS NULL
+			                 CONNECT BY PRIOR DEPT_ID = TOP_DEPT_ID
+			                 ORDER SIBLINGS BY DEPT_ID
+			               ) D LEFT OUTER JOIN EMPLOYEE E ON(D.DEPT_ID = E.DEPT_ID)
+			          ORDER BY D.DEPT_ID, E.EMP_POSITION DESC
+			       ) A LEFT OUTER JOIN DEPARTMENT C ON(A.TOP_DEPT_ID = C.DEPT_ID)
+			           LEFT OUTER JOIN COMMON_CODE F ON(A.EMP_POSITION = F.CMMN_ID)
+    	</if>
+	</select>
+	
+	<!-- 안면인식 성공시 비밀번호 가져오기 -->
+	<select id="successPass" parameterType="String" resultType="String">
+		SELECT EMP_PASSWORD
+		FROM EMPLOYEE
+		WHERE EMP_ID=#{userId}
+	</select>
+	
+	
+</mapper>
+
+
+
+
+

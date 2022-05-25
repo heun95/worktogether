@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.workTogether.chat.mapper.ChatMapper">
+	<resultMap type="chatBangVO" id="chatBangMap">
+		<id property="chatbangId" column="CHATBANG_ID" />
+		<collection property="employeeVO" resultMap="employeeMap"/>
+	</resultMap>
+	
+	<resultMap type="employeeVO" id="employeeMap">
+		<result property="empId" column="EMP_ID" />
+		<result property="empName" column="EMP_NAME" />
+		<result property="empPhoto" column="EMP_PHOTO" />
+	</resultMap>
+	
+	<!-- 채팅방 리스트 -->
+	<select id="chatBangList" parameterType="String" resultMap="chatBangMap">
+		SELECT
+            E.EMP_NAME
+		   ,C.EMP_ID
+		   ,C.CHATBANG_ID
+		   ,(SELECT ATCH_PATH FROM ATTACH WHERE ATCH_REL_ID=C.EMP_ID) AS EMP_PHOTO
+		FROM
+		    CHAT_BANG C LEFT OUTER JOIN EMPLOYEE E ON E.EMP_ID = C.EMP_ID 
+		WHERE 
+			C.CHATBANG_ID IN (SELECT CHATBANG_ID FROM CHAT_BANG WHERE EMP_ID = #{empId})
+		AND BANG_DEL_DT IS NULL
+	</select>
+	
+	<!-- 채팅방 만들기 -->
+	<insert id="insertBang" parameterType="hashMap">
+		<selectKey keyProperty="chatbangId" resultType="String" order="BEFORE">
+		SELECT 'BANG' || LPAD(NVL(MAX(SUBSTR(CHATBANG_ID,5,5)),0)+1,5,'0') FROM CHAT_BANG
+		</selectKey>
+		<foreach collection="empList" item="empId" index="index"
+			open="INSERT ALL " separator=" " close="SELECT * FROM DUAL">
+			INTO CHAT_BANG (
+			    CHATBANG_ID
+			   ,EMP_ID
+			) VALUES (
+			    #{chatbangId}
+			   ,#{empId}
+			)
+		</foreach>
+	</insert>
+	
+	<!-- 일치하는 채팅방 찾기 -->
+	<select id="bangCheck" parameterType="hashMap" resultType="String">
+		SELECT DISTINCT CHATBANG_ID 
+		FROM CHAT_BANG A 
+		WHERE 1=1 
+		AND CHATBANG_ID IN 
+	   		<foreach collection="empList" item="empId" open="(" close=")" separator="INTERSECT">
+			 SELECT CHATBANG_ID 
+                  FROM CHAT_BANG
+                  WHERE EMP_ID = #{empId}
+			</foreach>
+
+	    AND #{empCnt} = (
+			            SELECT COUNT(DISTINCT B.EMP_ID)S
+			              FROM CHAT_BANG B
+			             WHERE A.CHATBANG_ID = B.CHATBANG_ID
+			             )
+		AND BANG_DEL_DT IS NULL
+	</select>
+	
+	<!-- 채팅방 나갈시 삭제일 넣기 -->
+	<update id="bangDelete" parameterType="String">
+		UPDATE CHAT_BANG
+		   SET BANG_DEL_DT = SYSDATE
+		WHERE
+		    CHATBANG_ID = #{chatbangId}
+	</update>	
+	
+	<!-- 채팅내용 저장 -->
+	<insert id="insertChat" parameterType="chatVO">
+	INSERT INTO chat (
+	    CHAT_ID
+	   ,CHAT_CNTNT
+	   ,CHAT_WRTR
+	   ,CHAT_WRT_DT
+	   ,CHARBANG_ID
+	) VALUES (
+	    (SELECT 'CHAT' || LPAD(NVL(MAX(SUBSTR(CHAT_ID,5,5)),0)+1,5,'0') FROM CHAT) 
+	   ,#{chatCntnt}
+	   ,#{chatWrtr}
+	   ,#{chatWrtDt}
+	   ,#{chatbangId}
+	)
+	</insert>
+	
+	<!-- 채팅내용 가져오기 -->
+	<select id="chatMsgList" parameterType="String" resultType="chatVO">
+	SELECT
+	    C.CHAT_ID
+	   ,C.CHAT_CNTNT
+	   ,C.CHAT_WRTR
+	   ,(SELECT EMP_NAME FROM EMPLOYEE WHERE EMP_ID=C.CHAT_WRTR) AS WRTR_NAME
+	   ,(SELECT ATCH_PATH FROM ATTACH WHERE ATCH_REL_ID=C.CHAT_WRTR) AS WRTR_PHOTO
+	   ,C.CHAT_WRT_DT
+	   ,C.CHARBANG_ID
+	FROM
+	    CHAT C
+	WHERE CHARBANG_ID = #{chatbangId}
+	ORDER BY C.CHAT_WRT_DT
+	</select>
+</mapper>  
+  
+  
+  
+  
+  
+  
+  

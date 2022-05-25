@@ -1,0 +1,361 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.workTogether.community.mapper.CommunityMapper">
+
+	<!-- 커뮤니티 목록1 -->
+	<!-- 커뮤니티 페이징 처리1 -->
+	<!-- 커뮤니티 검색1 -->
+	<select id="list" resultType="boardVO" parameterType="map">
+		SELECT * FROM (
+		SELECT
+		ROWNUM KNUM
+		, T.RNUM
+		, T.BRD_ID
+		, T.BRD_TITLE
+		, T.BRD_WRTR
+		, T.BRD_WRT_DT
+		, T.BRD_MDFY_DT
+		, T.BRD_HIT
+		FROM
+		(
+		SELECT
+		ROW_NUMBER() OVER(ORDER BY BRD_ID)
+		RNUM
+		, BRD_ID
+		, BRD_TITLE
+		, (SELECT EMP_NAME FROM EMPLOYEE WHERE EMP_ID = BRD_WRTR) BRD_WRTR
+		, BRD_WRT_DT
+		, BRD_MDFY_DT
+		, BRD_HIT
+		FROM BOARD
+		WHERE BRD_TYPE_ID = 'G103'
+		AND BRD_DEL_DT IS NULL
+		AND 1 = 1
+		<if test="keyWord!=null and keyWord!=''">
+			AND ( BRD_TITLE LIKE '%'||#{keyWord}||'%'
+			OR BRD_WRTR LIKE
+			'%'||#{keyWord}||'%')
+		</if>
+		ORDER BY BRD_ID DESC
+		) T
+		) K
+		WHERE K.KNUM BETWEEN #{start} AND #{end}
+
+	</select>
+	
+	<!-- 커뮤니티 목록2 -->
+	<!-- 커뮤니티 페이징 처리2 -->
+	<!-- 커뮤니티 검색2 -->
+	<select id="list2" resultType="boardVO" parameterType="map">
+		SELECT * FROM (
+		SELECT
+		ROWNUM KNUM
+		, T.RNUM
+		, T.BRD_ID
+		, T.BRD_TITLE
+		, T.BRD_WRTR
+		, T.BRD_WRT_DT
+		, T.BRD_MDFY_DT
+		, T.BRD_HIT
+		FROM
+		(
+		SELECT
+		ROW_NUMBER() OVER(ORDER BY BRD_ID)
+		RNUM
+		, BRD_ID
+		, BRD_TITLE
+		, (SELECT EMP_NAME FROM EMPLOYEE WHERE EMP_ID = BRD_WRTR) BRD_WRTR
+		, BRD_WRT_DT
+		, BRD_MDFY_DT
+		, BRD_HIT
+		FROM BOARD
+		WHERE BRD_TYPE_ID = 'G104'
+		AND BRD_DEL_DT IS NULL
+		AND 1 = 1
+		<if test="keyWord!=null and keyWord!=''">
+			AND ( BRD_TITLE LIKE '%'||#{keyWord}||'%'
+			OR BRD_WRTR LIKE
+			'%'||#{keyWord}||'%')
+		</if>
+		ORDER BY BRD_ID DESC
+		) T
+		) K
+		WHERE K.KNUM BETWEEN #{start} AND #{end}
+
+	</select>
+	
+	<!-- 커뮤니티 전체 게시글 수 -->
+	<select id="listCount" parameterType="hashMap" resultType="int">
+		SELECT COUNT(*)
+		FROM BOARD
+		WHERE BRD_TYPE_ID = 'G103'
+		AND BRD_DEL_DT IS NULL
+		AND 1 = 1
+		<if test="keyWord!=null and keyWord!=''">
+			AND ( BRD_TITLE LIKE '%'||#{keyWord}||'%'
+			OR BRD_WRTR LIKE
+			'%'||#{keyWord}||'%')
+		</if>
+	</select>
+	
+	<!-- 커뮤니티 전체 게시글 수2 -->
+	<select id="listCount2" parameterType="hashMap" resultType="int">
+		SELECT COUNT(*)
+		FROM BOARD
+		WHERE BRD_TYPE_ID = 'G104'
+		AND BRD_DEL_DT IS NULL
+		AND 1 = 1
+		<if test="keyWord!=null and keyWord!=''">
+			AND ( BRD_TITLE LIKE '%'||#{keyWord}||'%'
+			OR BRD_WRTR LIKE
+			'%'||#{keyWord}||'%')
+		</if>
+	</select>
+	
+	<!-- 커뮤니티 입력하기1 -->
+	<insert id="insert" parameterType="boardVO">
+		<selectKey keyProperty="brdId" resultType="String"
+			order="BEFORE">
+			SELECT 'BORD'|| LPAD(
+			TO_NUMBER(NVL(MAX(SUBSTR(BRD_ID,5)),0))+1,5,'0') FROM BOARD
+		</selectKey>
+		INSERT INTO BOARD(
+		BRD_ID,
+		BRD_TITLE,
+		BRD_CNTNT,
+		BRD_HIT,
+		BRD_WRTR,
+		BRD_WRT_DT,
+		BRD_TYPE_ID)
+
+		VALUES(
+		#{brdId},
+		#{brdTitle},
+		#{brdCntnt},
+		0,
+		#{brdWrtr},
+		SYSDATE,
+		'G103')
+	</insert>
+	
+	<!-- 커뮤니티 입력하기2 -->
+	<insert id="insert2" parameterType="boardVO">
+		<selectKey keyProperty="brdId" resultType="String"
+			order="BEFORE">
+			SELECT 'BORD'|| LPAD(
+			TO_NUMBER(NVL(MAX(SUBSTR(BRD_ID,5)),0))+1,5,'0') FROM BOARD
+		</selectKey>
+		INSERT INTO BOARD(
+		BRD_ID,
+		BRD_TITLE,
+		BRD_CNTNT,
+		BRD_HIT,
+		BRD_WRTR,
+		BRD_WRT_DT,
+		BRD_TYPE_ID)
+
+		VALUES(
+		#{brdId},
+		#{brdTitle},
+		#{brdCntnt},
+		0,
+		#{brdWrtr},
+		SYSDATE,
+		'G104')
+	</insert>
+	
+	<!-- 커뮤니티 상세내용1 -->
+	<select id="detail" resultType="boardVO" parameterType="String">
+		SELECT
+		BRD_ID, BRD_TITLE, BRD_CNTNT, BRD_HIT,
+		BRD_WRTR AS BRD_RCV_ID,
+		(SELECT EMP_NAME FROM EMPLOYEE WHERE EMP_ID = BRD_WRTR) BRD_WRTR, BRD_WRT_DT,
+		BRD_MDFY_DT
+		FROM BOARD
+		WHERE BRD_TYPE_ID= 'G103'
+		AND BRD_ID = #{brdId}
+	</select>
+	
+	<!-- 커뮤니티 상세내용2 -->
+	<select id="detail2" resultType="boardVO" parameterType="String">
+		SELECT
+		BRD_ID, BRD_TITLE, BRD_CNTNT, BRD_HIT,
+		BRD_WRTR AS BRD_RCV_ID,
+		(SELECT EMP_NAME FROM EMPLOYEE WHERE EMP_ID = BRD_WRTR) BRD_WRTR, BRD_WRT_DT,
+		BRD_MDFY_DT
+		FROM BOARD
+		WHERE BRD_TYPE_ID= 'G104'
+		AND BRD_ID = #{brdId}
+	</select>
+	
+	<!-- 조회수 증가 -->
+	<update id="updateViewCnt" parameterType="String">
+		UPDATE BOARD
+		SET
+		BRD_HIT
+		= BRD_HIT+1
+		WHERE BRD_ID = #{brdId}
+	</update>
+	
+	<!-- 조회수 증가2 -->
+	<update id="updateViewCnt2" parameterType="String">
+		UPDATE BOARD
+		SET
+		BRD_HIT
+		= BRD_HIT+1
+		WHERE BRD_ID = #{brdId}
+	</update>
+	
+	<!-- 커뮤니티 수정하기 -->
+	<update id="update" parameterType="boardVO">
+		UPDATE BOARD
+		SET BRD_TITLE =
+		#{brdTitle},
+		BRD_CNTNT = #{brdCntnt},
+		BRD_MDFY_DT = SYSDATE
+		WHERE
+		BRD_TYPE_ID= 'G103'
+		AND BRD_DEL_DT IS NULL
+		AND BRD_ID = #{brdId}
+	</update>
+	
+	<!-- 커뮤니티 수정하기2 -->
+	<update id="update2" parameterType="boardVO">
+		UPDATE BOARD
+		SET BRD_TITLE =
+		#{brdTitle},
+		BRD_CNTNT = #{brdCntnt},
+		BRD_MDFY_DT = SYSDATE
+		WHERE
+		BRD_TYPE_ID= 'G103'
+		AND BRD_DEL_DT IS NULL
+		AND BRD_ID = #{brdId}
+	</update>
+	
+	<!-- 커뮤니티 삭제하기1 -->
+	<delete id="delete" parameterType="String">
+		UPDATE BOARD
+		SET BRD_DEL_DT =
+		SYSDATE
+		WHERE BRD_ID = #{brdId}
+	</delete>
+	
+	<!-- 커뮤니티 삭제하기2 -->
+	<delete id="delete2" parameterType="String">
+		UPDATE BOARD
+		SET BRD_DEL_DT =
+		SYSDATE
+		WHERE BRD_ID = #{brdId}
+	</delete>
+	
+	<!-- 댓글 리스트 -->
+	<select id="rlist" resultType="boardReplyVO" parameterType="map">
+		SELECT 
+        BRD_RPLY_ID
+        ,BRD_ID
+        ,BRD_RPLY_CNTNT
+        ,(SELECT EMP_NAME FROM EMPLOYEE WHERE 
+        EMP_ID = BRD_RPLY_WRTR)BRD_RPLY_WRTR
+        ,BRD_RPLY_WRT_DT
+        FROM BOARD_REPLY
+        WHERE BRD_ID = #{brdId}
+        AND BRD_RPLY_DEL_DT IS
+        NULL
+        ORDER BY
+        BRD_RPLY_ID DESC
+	</select>
+	
+	<!-- 댓글 리스트2 -->
+	<select id="rlist2" resultType="boardReplyVO" parameterType="map">
+		SELECT 
+        BRD_RPLY_ID
+        ,BRD_ID
+        ,BRD_RPLY_CNTNT
+        ,(SELECT EMP_NAME FROM EMPLOYEE WHERE 
+        EMP_ID = BRD_RPLY_WRTR)BRD_RPLY_WRTR
+        ,BRD_RPLY_WRT_DT
+        FROM BOARD_REPLY
+        WHERE BRD_ID = #{brdId}
+        AND BRD_RPLY_DEL_DT IS
+        NULL
+        ORDER BY
+        BRD_RPLY_ID DESC
+	</select>
+	
+	<!-- 댓글 입력하기 -->
+	<insert id="rinsert" parameterType="boardReplyVO">
+		INSERT INTO BOARD_REPLY(
+		BRD_RPLY_ID
+		,BRD_ID
+		,BRD_RPLY_CNTNT
+		,BRD_RPLY_WRTR
+		,BRD_RPLY_WRT_DT)
+
+		VALUES(
+		BOARD_RPLY_ID_SEQ.NEXTVAL
+		,#{brdId}
+		,#{brdRplyCntnt}
+		,#{brdRplyWrtr}
+		,SYSDATE)
+	</insert>
+	
+	<!-- 댓글 입력하기2 -->
+	<insert id="rinsert2" parameterType="boardReplyVO">
+		INSERT INTO BOARD_REPLY(
+		BRD_RPLY_ID
+		,BRD_ID
+		,BRD_RPLY_CNTNT
+		,BRD_RPLY_WRTR
+		,BRD_RPLY_WRT_DT)
+		
+		VALUES(
+		BOARD_RPLY_ID_SEQ.NEXTVAL
+		,#{brdId}
+		,#{brdRplyCntnt}
+		,#{brdRplyWrtr}
+		,SYSDATE)
+	</insert>
+	
+	<!-- 댓글 수정하기 -->
+	<update id="rupdate" parameterType="boardReplyVO">
+		UPDATE BOARD_REPLY
+		SET
+		BRD_RPLY_CNTNT = #{brdRplyCntnt},
+		BRD_RPLY_MDFY_DT = SYSDATE
+		WHERE
+		BRD_RPLY_ID =
+		#{brdRplyId}
+		AND BRD_RPLY_DEL_DT IS NULL
+	</update>
+	
+	<!-- 댓글 수정하기2 -->
+	<update id="rupdate2" parameterType="boardReplyVO">
+		UPDATE BOARD_REPLY
+		SET
+		BRD_RPLY_CNTNT = #{brdRplyCntnt},
+		BRD_RPLY_MDFY_DT = SYSDATE
+		WHERE
+		BRD_RPLY_ID =
+		#{brdRplyId}
+		AND BRD_RPLY_DEL_DT IS NULL
+	</update>
+	
+	<!-- 댓글 삭제하기1 -->
+	<delete id="rdelete" parameterType="String">
+		UPDATE BOARD_REPLY
+		SET
+		BRD_RPLY_DEL_DT = SYSDATE
+		WHERE
+		BRD_RPLY_ID = #{brdRplyId}
+	</delete>
+	
+	<!-- 댓글 삭제하기2 -->
+	<delete id="rdelete2" parameterType="String">
+		UPDATE BOARD_REPLY
+		SET
+		BRD_RPLY_DEL_DT = SYSDATE
+		WHERE
+		BRD_RPLY_ID = #{brdRplyId}
+	</delete>
+	
+</mapper>

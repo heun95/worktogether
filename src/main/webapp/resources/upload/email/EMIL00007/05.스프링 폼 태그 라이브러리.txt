@@ -1,0 +1,22 @@
+<스프링 폼 태그 라이브러리>
+1. 스프링 폼 태그란 ?
+-HTML 폼을 표시하기 위한 태그 라이브러리 
+-스프링 폼을 사용하면 HTML폼과 자바 객체를 쉽게 바인딩 할 수 있음 
+
+2. 선언은 ?
+<%@ taglib prefix="form" uri="http://www.springframework.org/tags/form" %>  
+
+3. 태그 목록은 ?
+- <form : password> : 패스워드 필드 
+- <form : form>  : 폼 
+- <form : input path="test"> : 테스트 필드  -> id="test" name="test"
+- <form : textarea> : 텍스트 영역 
+- <form : checkboxes> : 여러개 체크박스
+- <form : checkbox> : 체크박스
+- <form : radiobuttons> : 여러개의 라디오 버튼 
+- <form : radiobutton> : 라디오 버튼 
+- <form : select> : 셀렉트 박스
+- <form : hidden> : 숨겨진 필드
+- <form : label> : 라벨
+- <form : button> : 버튼
+- <form : errors> : 입력값 검증 오류 표시 (validate)

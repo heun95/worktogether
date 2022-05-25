@@ -1,0 +1,174 @@
+@charset "UTF-8";
+
+.rowPriority{
+	color: orange;
+	font-size: 1.2em;
+
+}
+.highPriority{
+	color: green;
+	font-size: 1.2em;
+}
+.icon{
+	display: inline-block;
+	width: 20px;
+	text-align: center;
+}
+.membtn{
+	margin-right: 5px;
+	margin-top: 5px;
+}
+.app-search{
+	padding: 0px;
+}
+.dateLabel{
+	font-size: 0.8em;
+}
+.fa-calendar{
+	margin-top: 20px;
+}
+#rpl{
+	padding: 25px;
+	height: 100px;
+	background-color : #f3f3f3;
+}
+.offcanvas {
+	border: 0px;
+}
+.offcanvas-header {
+	border: 1px solid #f3f3f3;
+	padding: 0.4rem 1rem;
+}
+.offcanvas-body {
+	flex-grow: 0;
+}
+.offcanvas-end {
+    width: 550px;
+}
+.offcanvas-footer{
+	box-shadow: 0px -10px 14px -10px #D6D4CD;
+	border: 0.5px solid #e0dcdc;
+}
+.card{
+	border: 1px solid #f3f3f3;
+}
+.card-title{
+	border: 1px solid #f3f3f3;	
+}
+.rqstrNm, .mdfyDt{
+	font-size: 0.8em;
+}
+.workTitleSpan{
+	font-weight: bold;
+	line-height: 200%;
+}
+#workCntntDiv{
+	min-height: 150px;
+}
+.rplbox{
+	padding: 10px;
+	margin-bottom: 10px;
+	height :auto;
+	min-height: 70px;
+	background-color : #f3f3f3;
+	border-radius: 20px;
+	display: flex;
+	border: 0.5px solid #e0dcdc;
+}
+.size40 {
+    width: 50px;
+    height: 50px;
+}
+.size30 {
+    width: 38px;
+    height: 38px;
+}
+.thumb{
+	border: 0.5px solid #e0dcdc;
+    background-color : white;
+    border-radius: 10px;
+	display: inline-block;
+}
+.rplContent{
+	max-width : 400px;
+	margin-left: 10px;
+	display: inline-block;
+}
+#search{
+	background-color: #f6f6fa;
+}
+#workRplyCntnt{
+	height: 50px; 
+}
+#workRplyWrtr{
+	font-size: 1.2em;
+	font-weight: bold;
+}
+#workRplyCntnt{
+	width: 350px;
+}
+.progress{
+	height: 20px;
+/* 	margin-top: 0.4rem; */
+}
+#slider {
+	/* 	height: 200px; */
+	/* 	width: 100%; */
+	
+}
+
+.sliderBtn {
+	display: ininline-block;
+	line-height: 100px;
+}
+
+.projDetail {
+	border: 1px solid #f3f3f3;
+	background-color: #fafafa;
+	border-radius: 6px;
+}
+
+.projName {
+	font-size: 1.5em;
+	font-weight: 600;
+}
+
+.projMainTb{
+	table-layout:fixed; 
+}
+
+.projMainTb th, .projMainTb td {
+	padding: 5px;
+	border-bottom: 1px solid #f3f3f3;
+}
+
+.homeWorkdt:hover {
+	background-color: #f3f3f3;
+}
+.wkDetail:hover {
+	background-color: #f3f3f3;
+}
+.w-30{
+	width: 30%
+}
+.vh30{
+	height: 30vh;
+}
+.vh55{
+	height: 55vh;
+}
+.vh40{
+	height: 40vh;
+}
+.vh45{
+	height: 45vh;
+}
+.vh50{
+	height: 50vh;
+}
+.h70{
+	height: 70%;
+}
+#projInsertModal #tree{
+	display: none;
+}

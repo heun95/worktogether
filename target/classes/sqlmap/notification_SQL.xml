@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.workTogether.notification.mapper.NotificationMapper">
+	 
+	<!-- 읽지않은 알림 리스트 -->
+	<select id="getNotiList" resultType="notificationVO" parameterType="string">
+		SELECT A.NOT_ID, A.NOT_SENDER, A.NOT_RECEIVER, A.NOT_TYPE_ID, A.NOT_CNTNT_ID, 
+		       A.NOT_MSG, A.NOT_URL, A.NOT_DT, A.NOT_READ_DT, A.ISREAD,
+		       B.EMP_NAME AS NOT_SENDER_NAME
+		  FROM NOTIFICATION A, EMPLOYEE B
+		 WHERE A.NOT_SENDER = B.EMP_ID
+		   AND NOT_RECEIVER = #{notReceiver}
+		   AND ISREAD IS NULL
+		 ORDER BY A.NOT_DT DESC
+	</select>
+	
+	<!-- 읽지않은 알림 총 개수 -->	
+	<select id="getAllCountNoti" resultType="int" parameterType="string">
+		SELECT COUNT(*) AS CNT
+	      FROM NOTIFICATION
+	     WHERE NOT_RECEIVER = #{notReceiver}
+	       AND ISREAD IS NULL
+	</select>
+	
+	<!-- 읽지 않은 알림 ONE -->
+	<select id="getNoti" resultType="notificationVO" parameterType="string">
+		SELECT T.NOT_ID, T.NOT_SENDER, T.NOT_RECEIVER, T.NOT_TYPE_ID, T.NOT_CNTNT_ID, 
+				       T.NOT_MSG, T.NOT_URL, T.NOT_DT, T.NOT_READ_DT, T.ISREAD, T.FIRSTREAD,
+				       T.NOT_SENDER_NAME AS NOT_SENDER_NAME
+		FROM (
+		            SELECT A.NOT_ID, A.NOT_SENDER, A.NOT_RECEIVER, A.NOT_TYPE_ID, A.NOT_CNTNT_ID, 
+		                           A.NOT_MSG, A.NOT_URL, A.NOT_DT, A.NOT_READ_DT, A.ISREAD, A.FIRSTREAD,
+		                           B.EMP_NAME AS NOT_SENDER_NAME
+		                  FROM NOTIFICATION A, EMPLOYEE B
+		                 WHERE A.NOT_SENDER = B.EMP_ID
+		                   AND NOT_RECEIVER = #{notReceiver}
+		                   AND ISREAD IS NULL
+		                   AND FIRSTREAD IS NULL
+		             ORDER BY A.NOT_DT DESC
+		) T
+		WHERE ROWNUM = 1
+	</select>
+	
+	
+	<!-- 읽지않은 알림 종류별 각 개수 -->
+	<select id="getCountNotiList" resultType="notificationVO" parameterType="string">
+		SELECT COUNT(*) AS CNT,
+		       SUBSTR(NOT_CNTNT_ID,0,4) AS NOT_CNTNT,
+		       CASE SUBSTR(NOT_CNTNT_ID,0,4) 
+		        WHEN 'ATRZ' THEN '결재'
+		        WHEN 'PRWK' THEN '프로젝트'
+		        WHEN 'EMIL' THEN '메일'
+		        ELSE '문의바람'
+		       END AS NOT_CNTNT_NAME
+		  FROM NOTIFICATION
+		 WHERE NOT_RECEIVER = #{notReceiver}
+		   AND ISREAD IS NULL
+		 GROUP BY SUBSTR(NOT_CNTNT_ID,0,4)
+	</select>
+
+	<!-- 알림 등록 -->
+	<insert id="insertNoti" parameterType="notificationVO">
+		<selectKey keyProperty="notId" resultType="String" order="BEFORE" >
+			SELECT 'NOTI' || LPAD(NVL(MAX(SUBSTR(NOT_ID,5,5)),0)+1,5,'0') FROM NOTIFICATION
+		</selectKey>
+		INSERT INTO NOTIFICATION(
+			NOT_ID, NOT_SENDER, NOT_RECEIVER, NOT_TYPE_ID, NOT_CNTNT_ID,
+			NOT_MSG, NOT_URL, NOT_DT) 
+		VALUES(
+			#{notId}, #{notSender}, #{notReceiver}, #{notTypeId}, #{notCntntId},
+			#{notMsg}, #{notUrl}, SYSDATE)
+	</insert>
+	
+	<!-- 알림 읽음 처리 -->
+	<update id="updateNoti" parameterType="string">
+		UPDATE NOTIFICATION
+		   SET ISREAD = 'Y',
+		  	   NOT_READ_DT = SYSDATE
+		 WHERE NOT_ID = #{notId}
+	</update>
+
+	<!-- 최초 알림 읽음 처리 -->
+	<update id="updateNoti2" parameterType="string">
+		UPDATE NOTIFICATION
+		   SET FIRSTREAD = 'Y'
+		 WHERE NOT_ID = #{notId}
+	</update>
+	
+	
+	
+
+</mapper>
+
+
+
+
+

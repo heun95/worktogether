@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.workTogether.schedule.mapper.ScheduleMapper">
+
+	<!-- 일정 리스트(전체,일반,중요)-->
+	<select id="getScheduleList" parameterType="hashMap" resultType="scheduleVO">
+		SELECT SCHDL_ID, SCHDL_TITLE, SCHDL_CNTNT, SCHDL_STRT_DT, SCHDL_END_DT, 
+			   SCHDL_WRTR, SCHDL_WRT_DT, SCHDL_MDFY_DT, SCHDL_TYPE_ID, SCHDL_IMPORT
+		  FROM SCHEDULE
+		 WHERE SCHDL_WRTR = #{schdlWrtr}
+		 <if test="schdlTypeId != '' and schdlTypeId != null">
+		   AND SCHDL_TYPE_ID = #{schdlTypeId}
+		 </if>
+		 ORDER BY SCHDL_STRT_DT
+	</select>	
+	
+	<!-- 일정 상세 -->
+	<select id="getSchedule" parameterType="string" resultType="scheduleVO">
+		SELECT SCHDL_ID, SCHDL_TITLE, SCHDL_CNTNT, SCHDL_STRT_DT, SCHDL_END_DT, 
+			   SCHDL_WRTR, SCHDL_WRT_DT, SCHDL_MDFY_DT, SCHDL_TYPE_ID, SCHDL_IMPORT
+		  FROM SCHEDULE
+		 WHERE SCHDL_ID = #{schdlId}
+	</select>	
+
+	<!-- 일정 등록 -->
+	<insert id="insertSchedule" parameterType="scheduleVO">
+		<selectKey keyProperty="schdlId" resultType="string" order="BEFORE">
+			SELECT 'SCHD' || LPAD(NVL(MAX(SUBSTR(SCHDL_ID,5,5)),0)+1,5,'0') FROM SCHEDULE
+		</selectKey>
+		INSERT INTO SCHEDULE(
+			SCHDL_ID, SCHDL_TITLE, SCHDL_CNTNT, SCHDL_STRT_DT, SCHDL_END_DT, 
+			SCHDL_WRTR, SCHDL_WRT_DT, SCHDL_TYPE_ID, SCHDL_IMPORT
+		)
+		VALUES(
+			#{schdlId}, #{schdlTitle}, #{schdlCntnt}, #{schdlStrtDt}, #{schdlEndDt},
+			#{schdlWrtr}, SYSDATE, #{schdlTypeId}, #{schdlImport}
+		)
+	</insert>
+
+	<!-- 일정 수정 -->
+	<update id="updateSchedule" parameterType="scheduleVO" >
+		UPDATE SCHEDULE
+		   SET SCHDL_TITLE = #{schdlTitle},
+		   	   SCHDL_CNTNT = #{schdlCntnt},
+		   	   SCHDL_STRT_DT = #{schdlStrtDt},
+		   	   SCHDL_END_DT = #{schdlEndDt},
+		   	   SCHDL_MDFY_DT = SYSDATE,
+		   	   SCHDL_TYPE_ID = #{schdlTypeId},
+		   	   SCHDL_IMPORT = #{schdlImport}
+		 WHERE SCHDL_ID = #{schdlId}
+	</update>
+
+	<!-- 일정 삭제 -->
+	<delete id="deleteSchedule" parameterType="string">
+		DELETE FROM SCHEDULE WHERE SCHDL_ID = #{schdlId}
+	</delete>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- 민정 
+	<resultMap type="calendarVO" id="calMap">
+		<result property="start" column="start1" />
+		<result property="end" column="end1" />
+	</resultMap>
+
+	달력 보여주기
+	<select id="calendar" parameterType="String" resultMap="calMap">
+		SELECT
+		SCHDL_ID
+		,SCHDL_TITLE
+		,SCHDL_CNTNT
+		,TO_char(SCHDL_STRT_DT,
+		'YYYY-MM-DD"T"HH24:MI:SS') start1
+		,TO_char(SCHDL_END_DT,
+		'YYYY-MM-DD"T"HH24:MI:SS') end1
+		,(SELECT EMP_NAME FROM EMPLOYEE WHERE
+		EMP_ID = SCHDL_WRTR)SCHDL_WRTR
+		,SCHDL_WRT_DT
+		FROM SCHEDULE
+		WHERE SCHDL_ID
+		=#{schdlId}
+	</select>
+
+	일정 입력하기
+	<insert id="insert" parameterType="scheduleVO">
+		<selectKey keyProperty="brdId" resultType="String"
+			order="BEFORE">
+			SELECT 'SCHD'|| LPAD(
+			TO_NUMBER(NVL(MAX(SUBSTR(SCHDL_ID,5)),0))+1,5,'0') FROM SCHEDULE
+		</selectKey>
+		INSERT INTO SCHEDULE(
+		SCHDL_ID
+		,SCHDL_TITLE
+		,SCHDL_CNTNT
+		,SCHDL_STRT_DT
+		,SCHDL_END_DT
+		,SCHDL_WRTR
+		,SCHDL_WRT_DT
+		,SCHDL_TYPE_ID)
+
+		VALUES(
+		#{schdlId}
+		,#{schdlTitle}
+		,#{schdlCntnt}
+		,#{schdlStrtDt}
+		,#{schdlEndDt}
+		,#{schdlWrtr}
+		,SYSDATE
+		,#{schdlTypeId})
+	</insert>
+-->
+</mapper>
+

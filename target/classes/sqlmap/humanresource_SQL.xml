@@ -1,0 +1,236 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.workTogether.humanresource.mapper.HumanresourceMapper">
+	
+	<!-- 직원 목록 -->
+	<select id="listCount" parameterType="hashMap" resultType="int">
+		 SELECT COUNT(*)
+         FROM EMPLOYEE a, department b
+         where a.dept_id = b.dept_id
+		 <if test="keyWord!=null and keyWord!=''">
+		    AND (A.EMP_ID LIKE '%'||#{keyWord}||'%' 
+		    OR A.EMP_NAME LIKE '%'||#{keyWord}||'%')
+		 </if>
+		 <if test="pos!=null and pos!=''">
+		 	AND (A.EMP_POSITION LIKE '%'||#{pos}||'%')
+		 </if>
+		 <if test="dep!=null and dep!=''">
+		 	AND (A.DEPT_ID LIKE '%'||#{dep}||'%')
+		 </if>
+	</select>
+	
+	
+	<!-- 페이징 처리 -->
+	<select id="list" parameterType="hashMap" resultType="employeeVO">
+		SELECT T.RNUM, 
+	           T.emp_id,
+               T.dept_name,
+               T.emp_Name,
+               (select CMMN_GROUP_NAME from COMMON_CODE where CMMN_ID = T.emp_Position) as emp_Position,
+               T.emp_Ecny_Ymd,
+               T.EMP_RETIRE_YMD,
+               T.emp_Email
+		FROM
+		(
+			 SELECT ROW_NUMBER() OVER(ORDER BY a.emp_id desc) RNUM,
+			 	   a.emp_id,
+	               b.dept_name,
+	               a.emp_Name,
+	               a.emp_Position,
+	               a.emp_Ecny_Ymd,
+                   a.EMP_RETIRE_YMD,
+	               a.emp_Email
+	        FROM EMPLOYEE a, department b
+	        where a.dept_id = b.dept_id		       
+	    	<if test="keyWord!=null and keyWord!=''">
+		    AND (A.EMP_ID LIKE '%'||#{keyWord}||'%' 
+		    OR A.EMP_NAME LIKE
+		     '%'||#{keyWord}||'%')
+		    </if>
+		    <if test="pos!=null and pos!=''">
+		 	AND (A.EMP_POSITION LIKE '%'||#{pos}||'%')
+		 	</if>
+		    <if test="dep!=null and dep!=''">
+		 	AND (A.DEPT_ID LIKE '%'||#{dep}||'%')
+		 	</if>
+		) T
+		WHERE T.RNUM BETWEEN #{start} AND #{end}
+	</select>
+
+	
+	<!-- 로그인 -->
+	<!-- 
+		<select id="loginemp" resultType="employeeVO">
+		 SELECT
+		    emp_id
+		   ,emp_password
+		 FROM employee
+		</select> 
+		-->
+	
+	<!--  -->
+	
+	<!-- 직원 등록 -->
+	<insert id="insertemp" parameterType="employeeVO">
+<!-- 	순서대로 알아서 아이디가 들어가도록 만든것 -->
+		<selectKey keyProperty="empId" resultType="String" order="BEFORE">
+			SELECT 'EMPL'||LPAD(NVL(MAX(SUBSTR(EMP_ID,5,5)),0)+1,5,'0') FROM EMPLOYEE
+		</selectKey>
+			INSERT INTO employee (
+			    emp_id
+			   ,emp_password
+			   ,emp_name
+			   ,emp_position
+			   ,dept_id
+			   ,emp_resume
+			   ,emp_birth
+	           ,emp_postno
+	           ,emp_addr1
+	           ,emp_addr2
+			   ,emp_email
+			   ,emp_ecny_ymd
+			   ,emp_state
+			   ,emp_tel
+			   ,emp_sign
+			   
+			) VALUES (
+			    #{empId}
+			   ,#{empPassword}
+			   ,#{empName}
+			   ,#{empPosition}
+			   ,#{deptId}
+			   ,#{empResume}
+			   ,#{empBirth}
+			   ,#{empPostno}
+			   ,#{empAddr1}
+			   ,#{empAddr2}
+			   ,#{empEmail}
+			   ,SYSDATE
+			   ,'H101'
+			   ,#{empTel}
+			   ,'SIGN00000'
+			)
+		
+	</insert>
+	
+	<!-- 사원 상세 -->
+	<select id="detail" parameterType="String" resultType="employeeVO">
+	          SELECT
+	        C.EMP_ID
+            ,C.EMP_PASSWORD
+            ,C.EMP_NAME
+            ,C.EMP_POSITION
+            ,C.DEPT_ID
+            ,C.EMP_EMAIL
+            ,C.EMP_ECNY_YMD
+            ,C.EMP_TEL
+            ,C.EMP_BIRTH
+            ,C.EMP_POSTNO
+            ,C.EMP_ADDR1
+            ,C.EMP_ADDR2
+	       ,A.atch_PATH
+           , D.DEPT_NAME
+		FROM employee C 
+        LEFT OUTER JOIN ATTACH A ON(C.emp_id = A.atch_rel_id)
+        INNER JOIN DEPARTMENT D ON(C.DEPT_ID = D.DEPT_ID)
+		WHERE C.emp_id = #{empId}
+	</select>
+
+	<!-- 사원 수정 1 -->
+	<update id="update1" parameterType="employeeVO">
+		  UPDATE EMPLOYEE SET 
+			emp_password=#{empPassword}
+	       ,emp_position=#{empPosition}
+	       ,dept_id=#{deptId}
+	       ,emp_birth=#{empBirth}
+	       ,emp_tel=#{empTel}
+	       ,emp_email=#{empEmail}
+	       ,emp_postno=#{empPostno}
+	       ,emp_addr1=#{empAddr1}
+	       ,emp_addr2=#{empAddr2}
+	       ,emp_ecny_ymd=#{empEcnyYmd}
+	       ,emp_state=#{empState}
+	       where emp_id=#{empId}
+	</update>
+	
+	<!-- 사원 수정 2 -->
+	<update id="update2" parameterType="attachVO">
+		 UPDATE ATTACH SET    
+             ATCH_REL_ID=#{atchRelId}
+            ,ATCH_PATH=#{atchPath}
+            ,ATCH_NAME=#{atchName}
+            ,ATCH_OLDNAME=#{atchOldname}
+         WHERE ATCH_ID=#{atchId}
+	</update>
+	
+	<!-- 사원 삭제 -->
+	<update id="delete" parameterType="string">
+		  UPDATE EMPLOYEE
+			    SET EMP_RETIRE_YMD = SYSDATE
+			WHERE
+			    EMP_ID = #{empId}
+	</update>
+	
+	<!-- 증명서 신청 -->
+	<insert id="insertcert" parameterType="crtfcAplictVO">
+		INSERT INTO crtfc_aplct (
+		    crtfc_aplct_id
+		   ,crtfc_type_id 
+		   ,crtfc_aplct_emp_id 
+		   ,crtfc_aplct_dt 
+		   ,crtfc_use 
+		   ,crtfc_aplct_state
+		) VALUES (
+		     (SELECT 'CRAP' || LPAD(NVL(MAX(SUBSTR(crtfc_aplct_id,5,5)),0)+1,5,'0') FROM crtfc_aplct)
+		   , #{crtfcTypeId}
+		   , #{crtfcAplctEmpId} 
+		   , SYSDATE
+		   , #{crtfcUse} 
+		   , '발급전'
+		)
+		
+	</insert>
+	
+	<!-- 증명서 리스트(자신만) -->
+	<select id="listCount2" parameterType="hashMap" resultType="int">
+		 SELECT COUNT(*)
+         FROM crtfc_aplct
+		 <if test="keyWord!=null and keyWord!=''">
+		    and (CRTFC_APLCT_EMP_ID = #{keyWord} or CRTFC_APLCT_EMP_ID = #{keyWord})
+		 </if>
+	</select>
+	
+	<!-- 증명서 페이징 처리 -->
+	<select id="list2" parameterType="hashMap" resultType="crtfcAplictVO">
+		SELECT T.RNUM, 
+			   T.crtfc_aplct_id,
+			   T.crtfc_type_id,
+			   T.crtfc_aplct_emp_id, 
+			   T.crtfc_aplct_dt, 
+			   T.crtfc_use, 
+			   T.crtfc_aplct_state
+		FROM
+		(
+			 SELECT ROW_NUMBER() OVER(ORDER BY crtfc_aplct_id) RNUM,
+			 	   crtfc_aplct_id
+				   ,crtfc_type_id 
+				   ,crtfc_aplct_emp_id 
+				   ,crtfc_aplct_dt 
+				   ,crtfc_use 
+				   ,crtfc_aplct_state
+	         FROM crtfc_aplct
+	       
+	    	<if test="keyWord!=null and keyWord!=''">
+		    and (CRTFC_APLCT_EMP_ID = #{keyWord} or CRTFC_APLCT_EMP_ID = #{keyWord})
+		    </if>
+		) T
+		WHERE T.RNUM BETWEEN #{start} AND #{end}
+	</select>
+	
+	<!-- 직원 권한 등록 -->
+	<insert id="insertEmpAuth" parameterType="hashmap">
+		INSERT INTO EMPLOYEE_AUTH(EMP_ID, AUTH)
+		VALUES(#{empId},#{auth})
+	</insert>
+	
+</mapper>

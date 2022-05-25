@@ -1,0 +1,11 @@
+@charset "UTF-8";
+
+.card-title{
+	border: 0px solid black;
+}
+#j-card{
+	padding: 30px;
+}
+#layout-wrapper > div.vertical-menu > div.navbar-brand-box{
+	background-color: #AAB9FF;
+}

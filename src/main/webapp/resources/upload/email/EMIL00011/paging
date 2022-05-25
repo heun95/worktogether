@@ -1,0 +1,92 @@
+<!-- 페이징 처리 시작 -->
+<ul class="pagination">
+	<!-- Previous 시작 -->
+	<li
+		class="paginate_button page-item previous <c:if test='${list.startPage<list.pagingCount+1}'>disabled</c:if>"
+		id="dataTable_previous"><a
+		href="/cus/list?currentPage=${list.startPage-list.pagingCount}&keyWord=${param.keyWord}"
+		aria-controls="dataTable" data-dt-idx="0" tabindex="0"
+		class="page-link">Previous</a></li>
+	<!-- Previous 끝 -->
+	<!-- Page번호 시작 -->
+	<c:forEach var="pNo" begin="${list.startPage}" end="${list.endPage}"
+		step="1">
+		<li
+			class="paginate_button page-item <c:if test='${list.currentPage eq pNo}'>active</c:if>"><a
+			href="/cus/list?currentPage=${pNo}&keyWord=${param.keyWord}" aria-controls="dataTable"
+			data-dt-idx="1" tabindex="0" class="page-link">${pNo}</a></li>
+	</c:forEach>
+	<!-- Page번호 끝 -->
+	<!-- Next 시작 -->
+	<li
+		class="paginate_button page-item next <c:if test='${list.endPage>=list.totalPages}'>disabled</c:if>"
+		id="dataTable_next"><a
+		href="/cus/list?currentPage=${list.startPage+list.pagingCount}&keyWord=${param.keyWord}"
+		aria-controls="dataTable" data-dt-idx="7" tabindex="0"
+		class="page-link">Next</a></li>
+	<!-- Next 끝 -->
+</ul>
+<!-- 페이징 처리 끝 -->
+
+
+--------------------------------------------------------------------------------------
+
+@RequestMapping(value = "/list", method = RequestMethod.GET)
+	public String list(Model model, 
+			@RequestParam(defaultValue = "1") int currentPage,
+			@RequestParam(defaultValue = "5", required = false) int size,
+			@RequestParam(required=false) String keyWord) {
+		
+		Map<String, String> pageHeader = new HashMap<String, String>();
+		pageHeader.put("subtitle", "Customer");
+		pageHeader.put("title", "고객 목록");
+
+		model.addAttribute("pageHeader", pageHeader);
+
+		int start = currentPage * size - (size - 1);
+		int end = currentPage * size;
+		
+		// <key,value>
+		Map<String, Object> map = new HashMap<String, Object>();
+		map.put("currentPage", currentPage);
+		map.put("size", size);
+		map.put("start", start);
+		map.put("end", end);
+		map.put("keyWord", keyWord);
+
+		List<CusVO> list = this.cusService.list(map);
+		
+		// 상품분류 별 거래처 목록 행의 수
+		int total = this.cusService.listCount(map);
+
+		model.addAttribute("list", new ArticlePage<CusVO>(total, currentPage, size, 5, list, start, end));
+		model.addAttribute("total", total);
+	
+		// forwarding
+		return "cus/list";
+	}
+	
+-----------------------------------------------------------------------------
+
+
+<select id="list" parameterType="hashMap" resultType="cusVO">
+		SELECT T.RNUM, T.CUS_NUM, T.CUS_NM
+		     , T.ADDR, T.PNE
+		FROM
+		(
+		    SELECT ROW_NUMBER() OVER(ORDER BY CUS_NUM) RNUM
+		         , CUS_NUM
+		         , CUS_NM
+		         , ADDR
+		         , PNE
+		      FROM CUS
+		    WHERE  1 = 1
+	    	<if test="keyWord!=null and keyWord!=''">
+		    AND    (CUS_NUM LIKE '%'||#{keyWord}||'%'
+		    OR     CUS_NM LIKE '%'||#{keyWord}||'%'
+		    OR     ADDR LIKE '%'||#{keyWord}||'%'
+		    OR     PNE LIKE '%'||#{keyWord}||'%')
+		    </if>
+		) T
+		WHERE T.RNUM BETWEEN #{start} AND #{end}
+	</select>

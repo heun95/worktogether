@@ -1,0 +1,19 @@
+﻿SVN 주소
+
+1팀 : 프로젝트 소스 : http://112.220.114.130:10001/svn/projects/202109F/team1/source
+      산출물 저장소 : http://112.220.114.130:10001/svn/projects/202109F/team1/documents
+
+레드마인 주소 : http://112.220.114.130:83/redmine/
+
+DB주소   : 112.220.114.130
+Port번호 : 1521
+SID      : xe
+
+레드마인 아이디 : 202109_이니셜
+
+DB_ID  (passsword는 모두 java) 
+1팀 : team1_202109f 
+2팀 : team2_202109f
+3팀 : team3_202109f 
+4팀 : team4_202109f 
+

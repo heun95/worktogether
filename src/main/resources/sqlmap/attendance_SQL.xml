@@ -1,0 +1,249 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper
+	namespace="kr.or.workTogether.attendance.mapper.AttendanceMapper">
+
+	<!-- 근태현황 state list -->
+	<!-- 파라미터 값으로 VO나 ,map 을 쓰는데 map은 VO가 두가지 일때 -->
+	<select id="state" parameterType="hashMap"
+		resultType="atndnDlyVO">
+		<![CDATA[
+		SELECT A.ATNDN_DLY_ID
+		     , A.EMP_ID
+		     , A.ATNDN_DLY_DT
+		     , A.ATNDN_STRT_DT
+		     , A.ATNDN_END_DT
+		     , A.ATNDN_DLY_RSN
+		     , A.ATNDN_TYPE_ID
+	    FROM   ATNDN_DLY A
+	    WHERE 1 = 1
+	    AND  EMP_ID = #{empId}
+	    AND ATNDN_DLY_DT >= To_Date(#{startDate},'YYYY-MM-DD HH24:MI:SS')
+	    AND ATNDN_DLY_DT < To_Date(#{endDate},'YYYY-MM-DD HH24:MI:SS')
+		UNION ALL
+		SELECT B.ATNDN_APLCT_ID, B.ATNDN_APLCT_RQSTR, B.ATNDN_STRT_DT, B.ATNDN_STRT_DT, B.ATNDN_STRT_DT, NULL, B.ATNDN_TYPE_ID
+		FROM
+		(
+		    SELECT ATNDN_APLCT_ID, ATNDN_APLCT_RQSTR,ATNDN_STRT_DT, ATNDN_END_DT, ATNDN_TYPE_ID
+		    FROM   ATNDN_APLCT
+		    WHERE ATNDN_APLCT_STATE = '승인완료'
+		    AND   TO_CHAR(ATNDN_STRT_DT,'YYYY-MM') = SUBSTR(#{startDate},1,7)
+		    AND   ATNDN_APLCT_RQSTR = #{empId}
+		) A, 
+		(
+		    SELECT T.*
+            FROM (
+                SELECT DISTINCT ATNDN_APLCT_ID, ATNDN_APLCT_RQSTR, ATNDN_STRT_DT + LEVEL - 1 AS ATNDN_STRT_DT, ATNDN_TYPE_ID
+                FROM   ATNDN_APLCT
+                WHERE  ATNDN_APLCT_STATE = '승인완료'            
+                AND   ATNDN_APLCT_RQSTR = #{empId}
+                CONNECT BY LEVEL <= (ATNDN_END_DT - ATNDN_STRT_DT + 1)
+            ) T
+            WHERE TO_CHAR(T.ATNDN_STRT_DT,'YYYY-MM') = SUBSTR(#{startDate},1,7)
+		) B
+		WHERE A.ATNDN_STRT_DT(+) = B.ATNDN_STRT_DT
+		ORDER BY 3
+		]]>
+	</select>
+
+	<!-- 근태신청 apply -->
+	<insert id="apply" parameterType="atndnAplictVO">
+		<selectKey keyProperty="atndnAplctId" resultType="string"
+			order="BEFORE">
+			SELECT 'ATAP' ||
+			LPAD(NVL(MAX(SUBSTR(ATNDN_APLCT_ID,5,5)),0)+1,5,'0') FROM ATNDN_APLCT
+		</selectKey>
+		INSERT INTO ATNDN_APLCT
+		(ATNDN_APLCT_ID
+		,ATNDN_APLCT_RQSTR
+		,ATNDN_STRT_DT
+		,ATNDN_END_DT
+		,ATNDN_WRT_DT
+		,ATNDN_APLCT_STATE
+		,ATNDN_TYPE_ID
+		,ATNDN_APLCT_RSN)
+
+		VALUES
+		(#{atndnAplctId}
+		,#{atndnAplctRqstr}
+		,#{atndnStrtDt}
+		,#{atndnEndDt}
+		,SYSDATE
+		,'승인대기중'
+		,#{atndnTypeId}
+		,#{atndnAplctRsn})
+	</insert>
+
+	<!-- 근태 신청 리스트 - ajax -->
+	<select id="applyList" parameterType="map"
+		resultType="atndnAplictVO">
+		<![CDATA[
+		SELECT
+		ATNDN_APLCT_ID
+		,ATNDN_APLCT_RQSTR
+		,ATNDN_STRT_DT
+		,ATNDN_END_DT
+		,ATNDN_WRT_DT
+		,ATNDN_APLCT_STATE
+		,ATNDN_TYPE_ID
+		,ATNDN_APLCT_RSN
+		FROM ATNDN_APLCT
+		WHERE ATNDN_STRT_DT <= To_Date(#{startDate},'YYYY-MM-DD HH24:MI:SS') 
+	            AND ATNDN_STRT_DT <= To_Date(#{endDate},'YYYY-MM-DD HH24:MI:SS') 
+	            and ATNDN_END_DT >= To_Date(#{startDate},'YYYY-MM-DD HH24:MI:SS') 
+	            and ATNDN_END_DT >= To_Date(#{endDate},'YYYY-MM-DD HH24:MI:SS')  
+         OR (
+	         	ATNDN_STRT_DT BETWEEN To_Date(#{startDate},'YYYY-MM-DD HH24:MI:SS')  AND To_Date(#{endDate},'YYYY-MM-DD HH24:MI:SS')
+	        AND ATNDN_APLCT_RQSTR = #{empId}
+         )
+         OR (
+         		ATNDN_END_DT BETWEEN  To_Date(#{startDate},'YYYY-MM-DD HH24:MI:SS')  AND To_Date(#{endDate},'YYYY-MM-DD HH24:MI:SS') 
+         	AND ATNDN_APLCT_RQSTR = #{empId}
+         )
+		ORDER BY ATNDN_STRT_DT ASC
+		]]>
+	</select>
+
+	<!-- 근태 신청 삭제(업데이트) -->
+	<delete id="applyDelete" parameterType="atndnAplictVO">
+		DELETE FROM ATNDN_APLCT
+		WHERE ATNDN_APLCT_ID = #{atndnAplctId}
+	</delete>
+
+	<!-- 근태 신청 승인 -->
+	<update id="applyAccept" parameterType="atndnAplictVO">
+		UPDATE ATNDN_APLCT
+		SET
+		ATNDN_APLCT_STATE = '승인완료'
+		WHERE ATNDN_APLCT_STATE = '승인대기중'
+		AND
+		ATNDN_APLCT_ID
+		= #{atndnAplctId}
+	</update>
+
+	<!-- 출근기록 -->
+	<insert id="recordStart" parameterType="atndnDlyVO">
+		<selectKey keyProperty="atndnDlyId" resultType="string"
+			order="BEFORE">
+			SELECT 'ATDL' ||
+			LPAD(NVL(MAX(SUBSTR(ATNDN_DLY_ID,5,5)),0)+1,5,'0') FROM ATNDN_DLY
+		</selectKey>
+		INSERT INTO ATNDN_DLY
+		(ATNDN_DLY_ID
+		,EMP_ID
+		,ATNDN_DLY_DT
+		,ATNDN_STRT_DT
+		,ATNDN_TYPE_ID)
+
+		VALUES
+		(#{atndnDlyId}
+		,#{empId}
+		,#{atndnDlyDt}
+		,#{atndnStrtDt}
+		,#{atndnTypeId})
+	</insert>
+
+	<!-- 출근중복방지 -->
+	<select id="getCountAtndnDly" resultType="int"
+		parameterType="string">
+		SELECT COUNT(*)
+		FROM ATNDN_DLY
+		WHERE EMP_ID = #{empId}
+		AND
+		TO_CHAR(ATNDN_DLY_DT,'YYYYMMDD') = TO_CHAR(SYSDATE,'YYYYMMDD')
+	</select>
+
+	<!-- 퇴근기록 -->
+	<update id="recordEnd" parameterType="atndnDlyVO">
+		UPDATE ATNDN_DLY
+		SET
+		ATNDN_END_DT = #{atndnEndDt}
+		,ATNDN_TYPE_ID = #{atndnTypeId}
+
+		WHERE
+		ATNDN_DLY_ID = #{atndnDlyId}
+		AND EMP_ID = #{empId}
+	</update>
+
+	<!-- 퇴근 처리 알림 -->
+	<select id="getCountAtndnEndDt" resultType="int"
+		parameterType="String">
+		SELECT COUNT(*)
+		FROM ATNDN_DLY
+		WHERE ATNDN_DLY_ID =
+		#{atndnDlyId}
+		AND
+		TO_CHAR(ATNDN_END_DT,'YYYYMMDD') =
+		TO_CHAR(SYSDATE,'YYYYMMDD')
+	</select>
+
+	<!-- 오늘 출근정보 -->
+	<select id="getAtndnDlyVO" resultType="atndnDlyVO"
+		parameterType="atndnDlyVO">
+		SELECT ATNDN_DLY_ID,
+		EMP_ID, ATNDN_DLY_DT,
+		ATNDN_STRT_DT,
+		ATNDN_END_DT,
+		ATNDN_DLY_RSN, ATNDN_TYPE_ID
+		FROM ATNDN_DLY
+		WHERE
+		ATNDN_DLY_ID = (
+		SELECT MAX(ATNDN_DLY_ID)
+		FROM ATNDN_DLY
+		WHERE EMP_ID = #{empId})
+	</select>
+
+	<!-- 해당 날짜에 대한 DB정보 가져오기 -->
+	<select id="dateSelectType" parameterType="atndnDlyVO"
+		resultType="atndnDlyVO">
+		SELECT *
+		FROM ATNDN_DLY
+		WHERE to_char(ATNDN_DLY_DT,
+		'YYYY-MM-DD') = #{atndnDlyDt}
+		and emp_id = #{empId}
+	</select>
+
+	<!-- 사유 입력 -->
+	<update id="reasonUpdate" parameterType="atndnDlyVO">
+		UPDATE ATNDN_DLY
+		SET
+		ATNDN_DLY_RSN = #{atndnDlyRsn}
+		WHERE ATNDN_DLY_ID = #{atndnDlyId}
+	</update>
+
+	<!-- 근태신청 목록 -->
+	<select id="getApplyList" resultType="atndnAplictVO" parameterType="atndnAplictVO">
+		SELECT
+		ATNDN_APLCT_ID
+		,ATNDN_APLCT_RQSTR
+		,ATNDN_STRT_DT
+		,ATNDN_END_DT
+		,ATNDN_WRT_DT
+		,ATNDN_APLCT_STATE
+		,ATNDN_TYPE_ID
+		,ATNDN_APLCT_RSN
+		FROM ATNDN_APLCT
+		WHERE ATNDN_APLCT_RQSTR = #{atndnAplctRqstr}
+		ORDER BY ATNDN_STRT_DT
+	</select>
+
+	<!-- 연차 사용 내역 -->
+	<!-- <select id="useAnnual" resultSetType="atndnAplictVO"> -->
+	<!-- SELECT * -->
+	<!-- FROM ATNDN_APLCT -->
+	<!-- WHERE ATNDN_TYPE_ID = 'annual' -->
+	<!-- AND -->
+	<!-- </select> -->
+	
+	<!-- 사원 부서명 가져오기 -->
+	<select id="bringDeptName" parameterType="atndnAplictVO" resultType="String">
+	SELECT DEPT_NAME 
+	FROM DEPARTMENT
+	WHERE DEPT_ID = (
+		SELECT DEPT_ID 
+		FROM EMPLOYEE 
+		WHERE EMP_ID = #{empId} 
+	)
+	</select>
+</mapper>
+

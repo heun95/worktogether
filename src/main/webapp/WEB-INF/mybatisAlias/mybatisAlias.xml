@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE configuration PUBLIC "-//mybatis.org//DTD Config 3.0//EN" "http://mybatis.org/dtd/mybatis-3-config.dtd">
+<configuration>
+	<!-- 
+		[마이바티스]
+	       스프링에서 "_"를 사용한 컬럼명을 사용 시 테이블 컬럼명에 "_"가 있을 경우 카멜케이스로 읽어줌
+		member 테이블 컬럼명이 mem_id일 경우 memId로 사용가능하도록 도와줌
+		cart 테이블에 cart_prod -> cartProd
+	-->
+	<settings>
+		<setting name="mapUnderscoreToCamelCase" value="true" /> 
+		<setting name="jdbcTypeForNull" value="VARCHAR"/> 
+	</settings>
+
+	<!-- 자주 사용하는 타입의 별칭 -->
+	<typeAliases>
+		<typeAlias type="kr.or.workTogether.common.vo.AtndnAplictVO" alias="atndnAplictVO" />
+		<typeAlias type="kr.or.workTogether.common.vo.AtndnDlyVO" alias="atndnDlyVO" />
+		<typeAlias type="kr.or.workTogether.common.vo.AtrzDocVO" alias="atrzDocVO" />
+		<typeAlias type="kr.or.workTogether.common.vo.AtrzLineDetailVO" alias="atrzLineDetailVO" />
+		<typeAlias type="kr.or.workTogether.common.vo.AtrzLineVO" alias="atrzLineVO" />
+		<typeAlias type="kr.or.workTogether.common.vo.AtrzVO" alias="atrzVO" />
+		<typeAlias type="kr.or.workTogether.common.vo.AttachVO" alias="attachVO" />
+		<typeAlias type="kr.or.workTogether.common.vo.BoardReplyVO" alias="boardReplyVO" />
+		<typeAlias type="kr.or.workTogether.common.vo.BoardVO" alias="boardVO" />
+		<typeAlias type="kr.or.workTogether.common.vo.CalendarVO" alias="calendarVO" />
+		<typeAlias type="kr.or.workTogether.common.vo.ChatBookmarkVO" alias="chatBookmarkVO" />
+		<typeAlias type="kr.or.workTogether.common.vo.ChatBangVO" alias="chatBangVO" />
+		<typeAlias type="kr.or.workTogether.common.vo.ChatVO" alias="chatVO" />
+		<typeAlias type="kr.or.workTogether.common.vo.CommonCodeVO" alias="commonCodeVO" />
+		<typeAlias type="kr.or.workTogether.common.vo.CrtfcAplictVO" alias="crtfcAplictVO" />
+		<typeAlias type="kr.or.workTogether.common.vo.DepartmentVO" alias="departmentVO" />
+		<typeAlias type="kr.or.workTogether.common.vo.DisplayOptionVO" alias="displayOptionVO" />
+		<typeAlias type="kr.or.workTogether.common.vo.EmailVO" alias="emailVO" />
+		<typeAlias type="kr.or.workTogether.common.vo.EmployeeVO" alias="employeeVO" />
+		<typeAlias type="kr.or.workTogether.common.vo.GanttChartVO" alias="ganttChartVO" />
+		<typeAlias type="kr.or.workTogether.common.vo.HomeBookmarkVO" alias="homeBookmarkVO" />
+		<typeAlias type="kr.or.workTogether.common.vo.MeetingVO" alias="meetingVO" />
+		<typeAlias type="kr.or.workTogether.common.vo.MemoVO" alias="memoVO" />
+		<typeAlias type="kr.or.workTogether.common.vo.MenuTreeVO" alias="menuTreeVO" />
+		<typeAlias type="kr.or.workTogether.common.vo.MtngMemVO" alias="mtngMemVO" />
+		<typeAlias type="kr.or.workTogether.common.vo.MtngRsrvtVO" alias="mtngRsrvtVO" />
+		<typeAlias type="kr.or.workTogether.common.vo.NotificationVO" alias="notificationVO" />
+		<typeAlias type="kr.or.workTogether.common.vo.ProjectVO" alias="projectVO" />
+		<typeAlias type="kr.or.workTogether.common.vo.ProjMemVO" alias="projMemVO" />
+		<typeAlias type="kr.or.workTogether.common.vo.ProjWorkReplyVO" alias="projWorkReplyVO" />
+		<typeAlias type="kr.or.workTogether.common.vo.ProjWorkVO" alias="projWorkVO" />
+		<typeAlias type="kr.or.workTogether.common.vo.WorkMngrVO" alias="workMngrVO" />
+		<typeAlias type="kr.or.workTogether.common.vo.PushOptionVO" alias="pushOptionVO" />
+		<typeAlias type="kr.or.workTogether.common.vo.ScheduleVO" alias="scheduleVO" />
+		<typeAlias type="kr.or.workTogether.common.vo.VacationVO" alias="vacationVO" />
+		<typeAlias type="kr.or.workTogether.common.vo.EmployeeAuthVO" alias="employeeAuthVO" />
+		
+	</typeAliases>
+</configuration>
+
+
+
+
+
+
+
+
