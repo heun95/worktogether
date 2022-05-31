@@ -1,10 +1,10 @@
 # worktogether
 
-![업무조회_AdobeCreativeCloudExpress](https://user-images.githubusercontent.com/92832110/170233804-d82ac6fd-0322-45f2-b822-097f8253b940.gif)
+![업무조회](https://user-images.githubusercontent.com/92832110/171126674-25404946-40bb-45cd-981f-807a828954e1.gif)
 
-![업무추가_AdobeCreativeCloudExpress](https://user-images.githubusercontent.com/92832110/170233869-2a1d1c68-6050-42a9-9131-a2c01644ca30.gif)
+![업무추가](https://user-images.githubusercontent.com/92832110/171126698-60c1ed3f-f1e4-45ab-bc83-a288ee1a604f.gif)
 
-![업무상세_AdobeCreativeCloudExpress](https://user-images.githubusercontent.com/92832110/170233881-f21ffbfe-f4d6-4d2c-83fb-cfdda883e9d9.gif)
+![업무상세](https://user-images.githubusercontent.com/92832110/171126658-8fbcf04b-caa4-4fab-91c5-441330973478.gif)
 
   최종프로젝트에서 spring 프레임워크를 활용하여 그룹웨어 서비스를 만들었습니다. 최근 코로나로 인한 재택근무 증가로 다양한 근무 형태에 기업은 효율적인 협업환경으로 
  직원 관리, 업무 관리, 업무 공유에 대한 중요도가 더욱 높아졌습니다. 이에 저희는 그룹웨어 대표 플랫폼 '다우오피스'와 '플로우' 두 플랫폼의 꼭 필요한 기능들 위주로 넣어 
